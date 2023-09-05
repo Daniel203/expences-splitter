@@ -1,26 +1,28 @@
-use leptos::{ev::SubmitEvent, html::Input, *};
+use leptos::*;
 use leptos_router::*;
+
+#[server(CreateRoom, "/api/room")]
+pub async fn create_room(room_name: String) -> Result<(), ServerFnError> {
+    println!("sono qui vediamo cosa riesco a printare");
+    log!("sono nella funzione create_room");
+    return Ok(());
+}
 
 #[component]
 pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
-    let (room_name, set_room_name) = create_signal(cx, "".to_string());
-    let room_name_input: NodeRef<Input> = create_node_ref(cx);
-
-    let on_submit = move |ev: SubmitEvent| {
-        ev.prevent_default();
-        let value = room_name_input().expect("<room name> to exist").value();
-        set_room_name(value);
-    };
+    let create_room = create_server_action::<CreateRoom>(cx);
+    let value = create_room.value();
+    let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
 
     return view! { cx,
     <div class="flex h-screen justify-center items-center">
-        <form on:submit=on_submit id="form">
+        <ActionForm action=create_room>
 
             <div class="grid grid-cols-3 grid-row-2 gap-y-8  w-80">
 
                 <div class="col-span-3">
                     <label class="block text-white text-sm font-bold mb-2" for="room_name">Enter the Room Name</label>
-                    <input id="room_name" type="text" placeholder="Room Name" value=room_name node_ref=room_name_input />
+                    <input id="room_name" type="text" placeholder="Room Name" name="room_name"/>
                 </div>
 
                 <A href="/">
@@ -31,10 +33,11 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
                     </button>
                 </A>
 
-                <button class="btn-primary btn-lg col-span-2" type="submit" form="form"><b>CREATE</b></button>
+                <button class="btn-primary btn-lg col-span-2" type="submit"><b>CREATE</b></button>
 
             </div>
-        </form>
+
+        </ActionForm>
     </div>
     };
 }

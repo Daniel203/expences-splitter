@@ -5,12 +5,14 @@ async fn main() -> std::io::Result<()> {
     use actix_web::*;
     use leptos::*;
     use leptos_actix::{generate_route_list, LeptosRoutes};
-    use leptos_start::app::*;
+    use expences_splitter::app::*;
 
     let conf = get_configuration(None).await.unwrap();
     let addr = conf.leptos_options.site_addr;
     // Generate the list of routes in your Leptos App
     let routes = generate_route_list(|cx| view! { cx, <App/> });
+
+    register_server_functions();
 
     HttpServer::new(move || {
         let leptos_options = &conf.leptos_options;
@@ -63,7 +65,7 @@ pub fn main() {
     // prefer using `cargo leptos serve` instead
     // to run: `trunk serve --open --features csr`
     use leptos::*;
-    use leptos_start::app::*;
+    use expences_splitter::app::*;
     use wasm_bindgen::prelude::wasm_bindgen;
 
     console_error_panic_hook::set_once();

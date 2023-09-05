@@ -3,9 +3,16 @@ use leptos_meta::*;
 use leptos_router::*;
 
 use crate::pages::{
-    create_room_page::CreateRoomPage, dashboard_page::DashboardPage, home_page::HomePage,
+    create_room_page::CreateRoomPage, create_room_page::CreateRoom, dashboard_page::DashboardPage, home_page::HomePage,
     join_room_page::JoinRoomPage,
 };
+
+// Helper to register all our server functions, if we're in SSR mode
+#[cfg(feature = "ssr")]
+pub fn register_server_functions() {
+    _ = CreateRoom::register();
+}
+
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
