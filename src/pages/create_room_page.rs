@@ -1,10 +1,22 @@
 use leptos::*;
 use leptos_router::*;
 
-#[server(CreateRoom, "/api/room")]
+#[server(CreateRoom, "/api")]
 pub async fn create_room(room_name: String) -> Result<(), ServerFnError> {
-    println!("sono qui vediamo cosa riesco a printare");
-    log!("sono nella funzione create_room");
+    use crate::db;
+    use crate::models::room::Room;
+
+    let mut conn = db().await?;
+
+    // TODO: replace the select with insert of course
+    let rooms: Vec<Room> = sqlx::query_as!(
+        Room,
+        "SELECT * FROM rooms",
+    )
+    .fetch_all(&mut conn)
+    .await?;
+
+    
     return Ok(());
 }
 
