@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+p {
+  @apply text-white;
+}
+
+input {
+  @apply appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight;
+}
+
+/* BUTTONS */
+button {
+  @apply font-bold py-2 px-4 rounded cursor-pointer;
+}
+
+.btn-primary {
+  @apply bg-primaryBtn;
+}
+
+.btn-primary:hover {
+  @apply bg-primaryBtnHover;
+}
+
+.btn-warn {
+  @apply bg-warnBtn;
+}
+
+.btn-warn:hover {
+  @apply bg-warnBtnHover;
+}
+
+.btn-xxl {
+  @apply py-8 px-12 rounded-lg;
+}
+
+.btn-xl {
+  @apply py-6 px-10 rounded-lg;
+}
+
+.btn-lg {
+  @apply py-4 px-8 rounded-lg;
+}
+
+
