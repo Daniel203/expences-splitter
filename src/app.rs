@@ -2,9 +2,12 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
-use crate::pages::{
-    create_room_page::CreateRoomPage, dashboard_page::DashboardPage, home_page::HomePage,
-    join_room_page::JoinRoomPage,
+use crate::{
+    error_template::{AppError, ErrorTemplate},
+    pages::{
+        create_room_page::CreateRoomPage, dashboard_page::DashboardPage, home_page::HomePage,
+        join_room_page::JoinRoomPage,
+    },
 };
 
 #[component]
@@ -21,10 +24,16 @@ pub fn App(cx: Scope) -> impl IntoView {
         <Title text="Welcome to Leptos"/>
 
         // content for this welcome page
-        <Router>
+        <Router fallback=|cx| {
+            let mut outside_errors = Errors::default();
+            outside_errors.insert_with_default_key(AppError::NotFound);
+            view! { cx,
+                <ErrorTemplate outside_errors/>
+            }
+            .into_view(cx)
+        }>
             <main class="h-screen bg-primaryBg">
                 <Routes>
-                    <Route path="/*any" view=NotFound/>
                     <Route path="" view=|cx| view! { cx, <HomePage/> }/>
                     <Route path="/new" view=|cx| view! { cx, <CreateRoomPage/> }/>
                     <Route path="/join" view=|cx| view! { cx, <JoinRoomPage/> }/>
@@ -32,27 +41,5 @@ pub fn App(cx: Scope) -> impl IntoView {
                 </Routes>
             </main>
         </Router>
-    }
-}
-
-/// 404 - Not Found
-#[component]
-fn NotFound(cx: Scope) -> impl IntoView {
-    // set an HTTP status code 404
-    // this is feature gated because it can only be done during
-    // initial server-side rendering
-    // if you navigate to the 404 page subsequently, the status
-    // code will not be set because there is not a new HTTP request
-    // to the server
-    #[cfg(feature = "ssr")]
-    {
-        // this can be done inline because it's synchronous
-        // if it were async, we'd use a server function
-        let resp = expect_context::<leptos_actix::ResponseOptions>(cx);
-        resp.set_status(actix_web::http::StatusCode::NOT_FOUND);
-    }
-
-    view! { cx,
-        <h1>"Not Found"</h1>
     }
 }

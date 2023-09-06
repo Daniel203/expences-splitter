@@ -1,114 +1,91 @@
-// #[cfg(feature = "ssr")]
-// async fn server_fn_handler(
-//     State(app_state): State<AppState>,
-//     path: Path<String>,
-//     headers: HeaderMap,
-//     raw_query: RawQuery,
-//     request: Request<AxumBody>,
-// ) -> impl IntoResponse {
-//     handle_server_fns_with_context(
-//         path,
-//         headers,
-//         raw_query,
-//         move || {
-//             provide_context(app_state.pool.clone());
-//         },
-//         request,
-//     )
-//     .await
-// }
-//
-#[cfg(feature = "ssr")]
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    use actix_files::Files;
-    use actix_web::*;
-    use expences_splitter::app::*;
-    use expences_splitter::state::AppState;
-    use leptos::{provide_context, *};
-    use leptos_actix::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
-    use sqlx::sqlite::SqlitePoolOptions;
+use cfg_if::cfg_if;
 
-    let conf = get_configuration(None).await.unwrap();
-    let addr = conf.leptos_options.site_addr;
-    // Generate the list of routes in your Leptos App
-    let routes = generate_route_list(|cx| view! { cx, <App/> });
+cfg_if! {
+    if #[cfg(feature = "ssr")] {
+        use axum::{
+            response::{Response, IntoResponse},
+            routing::get,
+            extract::{Path, State, RawQuery},
+            http::{Request, header::HeaderMap},
+            body::Body as AxumBody,
+            Router,
+        };
+        use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns_with_context};
+        use leptos::{log, view, provide_context, get_configuration};
+        use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
+        use expences_splitter::state::AppState;
+        use expences_splitter::app::App;
 
-    let pool = SqlitePoolOptions::new()
-        .connect("sqlite:expences.db")
-        .await
-        .expect("Failed to create the database pool");
+        async fn server_fn_handler(State(app_state): State<AppState>, path: Path<String>, headers: HeaderMap, raw_query: RawQuery,
+            request: Request<AxumBody>) -> impl IntoResponse {
 
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("Failed to migrate database");
+            log!("{:?}", path);
 
-    HttpServer::new(move || {
-        let leptos_options = &conf.leptos_options;
-        let site_root = &leptos_options.site_root;
+            handle_server_fns_with_context(path, headers, raw_query, move |cx| {
+                provide_context(cx, app_state.pool.clone());
+            }, request).await
+        }
 
-        App::new()
-            .route(
-                "/api/{tail:.*}",
-                leptos_actix::handle_server_fns(),
-            )
-            // serve JS/WASM/CSS from `pkg`
-            .service(Files::new("/pkg", format!("{site_root}/pkg")))
-            // serve other assets from the `assets` directory
-            .service(Files::new("/assets", site_root))
-            // serve the favicon from /favicon.ico
-            .service(favicon)
-            .leptos_routes(
-                leptos_options.to_owned(),
-                routes.to_owned(),
-                |cx| view! { cx, <App/> },
-            )
-            .app_data(web::Data::new(AppState {
-                leptos_options: leptos_options.to_owned(),
+        async fn leptos_routes_handler(State(app_state): State<AppState>, req: Request<AxumBody>) -> Response{
+            let handler = leptos_axum::render_app_to_stream_with_context(app_state.leptos_options.clone(),
+                move |cx| {
+                    provide_context(cx, app_state.pool.clone());
+                },
+                |cx| view! { cx, <App/> }
+            );
+            handler(req).await.into_response()
+        }
+
+
+        #[tokio::main]
+        async fn main() {
+            use expences_splitter::app::*;
+            use expences_splitter::fileserv::file_and_error_handler;
+
+            simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
+
+            let conf = get_configuration(None).await.unwrap();
+            let leptos_options = conf.leptos_options;
+            let addr = leptos_options.site_addr;
+            let routes = generate_route_list(|cx| view! { cx, <App/> }).await;
+
+             let pool = SqlitePoolOptions::new()
+                .connect("sqlite:expences.db")
+                .await
+                .expect("Could not make pool.");
+
+            sqlx::migrate!()
+                .run(&pool)
+                .await
+                .expect("could not run SQLx migrations");
+
+            let app_state = AppState{
+                leptos_options,
                 pool: pool.clone(),
-            }))
-        //.wrap(middleware::Compress::default())
-    })
-    .bind(&addr)?
-    .run()
-    .await
-}
+                routes: routes.clone(),
+            };
 
-#[cfg(feature = "ssr")]
-#[actix_web::get("favicon.ico")]
-async fn favicon(
-    leptos_options: actix_web::web::Data<leptos::LeptosOptions>,
-) -> actix_web::Result<actix_files::NamedFile> {
-    let leptos_options = leptos_options.into_inner();
-    let site_root = &leptos_options.site_root;
-    Ok(actix_files::NamedFile::open(format!(
-        "{site_root}/favicon.ico"
-    ))?)
-}
+            // build our application with a route
+            let app = Router::new()
+                .route("/api/*fn_name", get(server_fn_handler).post(server_fn_handler))
+                .leptos_routes_with_handler(routes, get(leptos_routes_handler) )
+                .fallback(file_and_error_handler)
+                .with_state(app_state);
 
-#[cfg(not(any(feature = "ssr", feature = "csr")))]
-pub fn main() {
-    // no client-side main function
-    // unless we want this to work with e.g., Trunk for pure client-side testing
-    // see lib.rs for hydration function instead
-    // see optional feature `csr` instead
-}
+            // run our app with hyper
+            // `axum::Server` is a re-export of `hyper::Server`
+            log!("listening on http://{}", &addr);
+            axum::Server::bind(&addr)
+                .serve(app.into_make_service())
+                .await
+                .unwrap();
+        }
+    } else {
+        pub fn main() {
+            // no client-side main function
+            // unless we want this to work with e.g., Trunk for a purely client-side app
+            // see lib.rs for hydration
+        }
+    }
 
-#[cfg(all(not(feature = "ssr"), feature = "csr"))]
-pub fn main() {
-    // a client-side main function is required for using `trunk serve`
-    // prefer using `cargo leptos serve` instead
-    // to run: `trunk serve --open --features csr`
-    use expences_splitter::app::*;
-    use leptos::*;
-    use wasm_bindgen::prelude::wasm_bindgen;
-
-    console_error_panic_hook::set_once();
-
-    leptos::mount_to_body(move |cx| {
-        // note: for testing it may be preferrable to replace this with a
-        // more specific component, although leptos_router should still work
-        view! {cx, <App/> }
-    });
 }
