@@ -1,24 +1,58 @@
+// #[cfg(feature = "ssr")]
+// async fn server_fn_handler(
+//     State(app_state): State<AppState>,
+//     path: Path<String>,
+//     headers: HeaderMap,
+//     raw_query: RawQuery,
+//     request: Request<AxumBody>,
+// ) -> impl IntoResponse {
+//     handle_server_fns_with_context(
+//         path,
+//         headers,
+//         raw_query,
+//         move || {
+//             provide_context(app_state.pool.clone());
+//         },
+//         request,
+//     )
+//     .await
+// }
+//
 #[cfg(feature = "ssr")]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     use actix_files::Files;
     use actix_web::*;
-    use leptos::*;
-    use leptos_actix::{generate_route_list, LeptosRoutes};
     use expences_splitter::app::*;
+    use expences_splitter::state::AppState;
+    use leptos::{provide_context, *};
+    use leptos_actix::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
+    use sqlx::sqlite::SqlitePoolOptions;
 
     let conf = get_configuration(None).await.unwrap();
     let addr = conf.leptos_options.site_addr;
     // Generate the list of routes in your Leptos App
     let routes = generate_route_list(|cx| view! { cx, <App/> });
 
+    let pool = SqlitePoolOptions::new()
+        .connect("sqlite:expences.db")
+        .await
+        .expect("Failed to create the database pool");
+
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("Failed to migrate database");
+
     HttpServer::new(move || {
         let leptos_options = &conf.leptos_options;
         let site_root = &leptos_options.site_root;
 
-
         App::new()
-            .route("/api/{tail:.*}", leptos_actix::handle_server_fns())
+            .route(
+                "/api/{tail:.*}",
+                leptos_actix::handle_server_fns(),
+            )
             // serve JS/WASM/CSS from `pkg`
             .service(Files::new("/pkg", format!("{site_root}/pkg")))
             // serve other assets from the `assets` directory
@@ -30,7 +64,10 @@ async fn main() -> std::io::Result<()> {
                 routes.to_owned(),
                 |cx| view! { cx, <App/> },
             )
-            .app_data(web::Data::new(leptos_options.to_owned()))
+            .app_data(web::Data::new(AppState {
+                leptos_options: leptos_options.to_owned(),
+                pool: pool.clone(),
+            }))
         //.wrap(middleware::Compress::default())
     })
     .bind(&addr)?
@@ -63,8 +100,8 @@ pub fn main() {
     // a client-side main function is required for using `trunk serve`
     // prefer using `cargo leptos serve` instead
     // to run: `trunk serve --open --features csr`
-    use leptos::*;
     use expences_splitter::app::*;
+    use leptos::*;
     use wasm_bindgen::prelude::wasm_bindgen;
 
     console_error_panic_hook::set_once();

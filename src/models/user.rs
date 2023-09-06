@@ -1,4 +1,7 @@
-#[derive(Debug, Clone)]
+use serde::{Deserialize, Serialize};
+
+#[cfg_attr(feature="ssr", derive(sqlx::FromRow))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: i64,
     pub name: String,

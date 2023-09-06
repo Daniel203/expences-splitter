@@ -1,22 +1,23 @@
+use crate::models::room::Room;
 use leptos::*;
 use leptos_router::*;
 
 #[server(CreateRoom, "/api")]
-pub async fn create_room(room_name: String) -> Result<(), ServerFnError> {
-    use crate::db;
-    use crate::models::room::Room;
+pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), ServerFnError> {
+    use crate::state::pool;
 
-    let mut conn = db().await?;
+    let pool = pool(cx);
+    match pool {
+        Ok(pool) => log!("pool: {:?}", pool),
+        Err(e) => return Err(ServerFnError::ServerError("No pool found".to_string()))
+    }
+    // log!("pool: {:?}", pool);
+    //
+    // // TODO: replace the select with insert of course
+    // let rows = sqlx::query_as!(Room, "SELECT * FROM rooms").fetch_all(&pool).await?;
+    //
+    // log!("rooms: {:?}", rows);
 
-    // TODO: replace the select with insert of course
-    let rooms: Vec<Room> = sqlx::query_as!(
-        Room,
-        "SELECT * FROM rooms",
-    )
-    .fetch_all(&mut conn)
-    .await?;
-
-    
     return Ok(());
 }
 
@@ -50,6 +51,12 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
             </div>
 
         </ActionForm>
+
+        <Show when=has_error fallback=|_| ()>
+            // TODO: create message that says error
+            <div></div>
+        </Show>
+
     </div>
     };
 }
