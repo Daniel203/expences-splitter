@@ -19,8 +19,6 @@ cfg_if! {
         async fn server_fn_handler(State(app_state): State<AppState>, path: Path<String>, headers: HeaderMap, raw_query: RawQuery,
             request: Request<AxumBody>) -> impl IntoResponse {
 
-            log!("{:?}", path);
-
             handle_server_fns_with_context(path, headers, raw_query, move |cx| {
                 provide_context(cx, app_state.pool.clone());
             }, request).await
@@ -35,7 +33,6 @@ cfg_if! {
             );
             handler(req).await.into_response()
         }
-
 
         #[tokio::main]
         async fn main() {
