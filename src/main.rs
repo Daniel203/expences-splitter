@@ -14,7 +14,10 @@ cfg_if! {
         use leptos::{log, view, provide_context, get_configuration};
         use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
         use expences_splitter::state::AppState;
+        use expences_splitter::models::user::User;
         use expences_splitter::app::App;
+        use axum_session::{SessionConfig, SessionLayer, SessionStore};
+        use axum_session_auth::{AuthSessionLayer, AuthConfig, SessionSqlitePool};
 
         async fn server_fn_handler(State(app_state): State<AppState>, path: Path<String>, headers: HeaderMap, raw_query: RawQuery,
             request: Request<AxumBody>) -> impl IntoResponse {
@@ -46,7 +49,7 @@ cfg_if! {
             let addr = leptos_options.site_addr;
             let routes = generate_route_list(|cx| view! { cx, <App/> }).await;
 
-             let pool = SqlitePoolOptions::new()
+            let pool = SqlitePoolOptions::new()
                 .connect("sqlite:expences.db")
                 .await
                 .expect("Could not make pool.");
@@ -55,6 +58,12 @@ cfg_if! {
                 .run(&pool)
                 .await
                 .expect("could not run SQLx migrations");
+
+            // Auth section
+            let session_config = SessionConfig::default().with_table_name("axum_sessions");
+            let auth_config = AuthConfig::<i64>::default();
+            let session_store = SessionStore::<SessionSqlitePool>::new(Some(pool.clone().into()), session_config);
+            session_store.initiate().await.unwrap();
 
             let app_state = AppState{
                 leptos_options,
@@ -67,6 +76,9 @@ cfg_if! {
                 .route("/api/*fn_name", get(server_fn_handler).post(server_fn_handler))
                 .leptos_routes_with_handler(routes, get(leptos_routes_handler) )
                 .fallback(file_and_error_handler)
+                .layer(AuthSessionLayer::<User, i64, SessionSqlitePool, SqlitePool>::new(Some(pool.clone()))
+                    .with_config(auth_config))
+                .layer(SessionLayer::new(session_store))
                 .with_state(app_state);
 
             // run our app with hyper
