@@ -17,8 +17,10 @@ pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), Ser
         return Err(ServerFnError::ServerError("Room already exists".to_string()));
     } 
 
+    log!("creating room: {:?}", room_name);
+
     // insert the room and return the new id
-    let res = sqlx::query_as!(Room, "INSERT INTO rooms (room_name, max_participants) VALUES ($1, 20) RETURNING *", room_name)
+    let res = sqlx::query_as!(Room, "INSERT INTO rooms (room_name, max_participants, owner) VALUES ($1, 20, 3) RETURNING *", room_name)
         .fetch_one(&pool)
         .await;
 

@@ -21,7 +21,7 @@ pub fn App(cx: Scope) -> impl IntoView {
         <Stylesheet id="leptos" href="/pkg/expences-splitter.css"/>
 
         // sets the document title
-        <Title text="Welcome to Leptos"/>
+        <Title text="Expences Splitter"/>
 
         // content for this welcome page
         <Router fallback=|cx| {
