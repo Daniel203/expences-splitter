@@ -18,18 +18,21 @@ cfg_if! {
         use expences_splitter::app::App;
         use axum_session::{SessionConfig, SessionLayer, SessionStore};
         use axum_session_auth::{AuthSessionLayer, AuthConfig, SessionSqlitePool};
+        use expences_splitter::pages::auth::AuthSession;
 
-        async fn server_fn_handler(State(app_state): State<AppState>, path: Path<String>, headers: HeaderMap, raw_query: RawQuery,
+        async fn server_fn_handler(State(app_state): State<AppState>, auth_session: AuthSession,path: Path<String>, headers: HeaderMap, raw_query: RawQuery,
             request: Request<AxumBody>) -> impl IntoResponse {
 
             handle_server_fns_with_context(path, headers, raw_query, move |cx| {
+                provide_context(cx, auth_session.clone());
                 provide_context(cx, app_state.pool.clone());
             }, request).await
         }
 
-        async fn leptos_routes_handler(State(app_state): State<AppState>, req: Request<AxumBody>) -> Response{
+        async fn leptos_routes_handler(auth_session: AuthSession,State(app_state): State<AppState>, req: Request<AxumBody>) -> Response{
             let handler = leptos_axum::render_app_to_stream_with_context(app_state.leptos_options.clone(),
                 move |cx| {
+                    provide_context(cx, auth_session.clone());
                     provide_context(cx, app_state.pool.clone());
                 },
                 |cx| view! { cx, <App/> }
@@ -42,7 +45,7 @@ cfg_if! {
             use expences_splitter::app::*;
             use expences_splitter::fileserv::file_and_error_handler;
 
-            simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
+            simple_logger::init_with_level(log::Level::Info).expect("couldn't initialize logging");
 
             let conf = get_configuration(None).await.unwrap();
             let leptos_options = conf.leptos_options;
@@ -63,7 +66,6 @@ cfg_if! {
             let session_config = SessionConfig::default().with_table_name("axum_sessions");
             let auth_config = AuthConfig::<i64>::default();
             let session_store = SessionStore::<SessionSqlitePool>::new(Some(pool.clone().into()), session_config).await.unwrap();
-            // session_store.initiate().await.unwrap();
 
             let app_state = AppState{
                 leptos_options,

@@ -5,7 +5,7 @@ use crate::models::user::User;
 
 cfg_if! {
     if #[cfg(feature = "ssr")] {
-        use leptos::{LeptosOptions, ServerFnError, Scope};
+        use leptos::{LeptosOptions, ServerFnError, Scope, log};
         use sqlx::SqlitePool;
         use axum::extract::FromRef;
         use leptos_router::RouteListing;
@@ -25,8 +25,8 @@ cfg_if! {
         }
 
         pub fn auth(cx: Scope) -> Result<AuthSession, ServerFnError> {
-            use_context::<AuthSession>(cx)
-                .ok_or_else(|| ServerFnError::ServerError("Auth session missing.".into()))
+            return use_context::<AuthSession>(cx)
+                .ok_or_else(|| ServerFnError::ServerError("Auth session missing.".into()));
         }
 
     }

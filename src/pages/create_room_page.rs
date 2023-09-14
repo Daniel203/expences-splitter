@@ -36,7 +36,6 @@ pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), Ser
             return Err(ServerFnError::ServerError("Error creating room".to_string()));
         }
     }
-
 }
 
 #[component]
@@ -49,7 +48,7 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
     <div class="flex h-screen justify-center items-center">
         <ActionForm action=create_room>
 
-            <div class="grid grid-cols-3 grid-row-2 gap-y-8  w-80">
+            <div class="grid grid-cols-3 grid-row-2 gap-y-8 w-80">
 
                 <div class="col-span-3">
                     <label class="block text-white text-sm font-bold mb-2" for="room_name">Enter the Room Name</label>

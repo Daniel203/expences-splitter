@@ -5,7 +5,7 @@ use leptos_router::*;
 use crate::{
     error_template::{AppError, ErrorTemplate},
     pages::{
-        auth::{get_user, Login, Register, RegisterPage, LoginPage},
+        auth::{get_user, GetUser, Login, LoginPage, Register, RegisterPage},
         create_room_page::CreateRoomPage,
         dashboard_page::DashboardPage,
         home_page::HomePage,
@@ -15,20 +15,8 @@ use crate::{
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
-    let login = create_server_action::<Login>(cx);
-    let register = create_server_action::<Register>(cx);
-
-    let user = create_resource(
-        cx,
-        move || {
-            return (login.version().get(), register.version().get());
-        },
-        move |_| get_user(cx),
-    );
-
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context(cx);
-
 
     view! { cx,
         // injects a stylesheet into the document <head>
@@ -42,23 +30,48 @@ pub fn App(cx: Scope) -> impl IntoView {
         <Router fallback=|cx| {
             let mut outside_errors = Errors::default();
             outside_errors.insert_with_default_key(AppError::NotFound);
-            view! { cx,
-                <ErrorTemplate outside_errors/>
-            }
-            .into_view(cx)
+            view! { cx, <ErrorTemplate outside_errors/> } .into_view(cx)
         }>
-            <header>
-            </header>
             <main class="h-screen bg-primaryBg">
                 <Routes>
-                    <Route path="" view=|cx| view! { cx, <HomePage/> }/>
-                    <Route path="new" view=|cx| view! { cx, <CreateRoomPage/> }/>
-                    <Route path="join" view=|cx| view! { cx, <JoinRoomPage/> }/>
-                    <Route path="room/:id" view=|cx| view! { cx, <DashboardPage/> }/>
-                    <Route path="register" view=|cx| view! { cx, <RegisterPage/> }/>
-                    <Route path="login" view=|cx| view! { cx, <LoginPage/> }/>
+                    <Route path="" view=|cx| view! { cx, <Page/> }>
+                        <Route path="" view=|cx| view! { cx, <HomePage/> }/>
+                        <Route path="new" view=|cx| view! { cx, <CreateRoomPage/> }/>
+                        <Route path="join" view=|cx| view! { cx, <JoinRoomPage/> }/>
+                        <Route path="room/:id" view=|cx| view! { cx, <DashboardPage/> }/>
+                        <Route path="register" view=|cx| view! { cx, <RegisterPage /> }/>
+                        <Route path="login" view=|cx| view! { cx, <LoginPage /> }/>
+                    </Route>
                 </Routes>
             </main>
         </Router>
     }
+}
+
+#[component]
+pub fn Page(cx: Scope) -> impl IntoView {
+    let login = create_server_action::<Login>(cx);
+    let register = create_server_action::<Register>(cx);
+
+    // get the user every time that the "login" or "register" server functions are called
+    let user = create_resource(
+        cx,
+        move || {
+            return (login.version().get(), register.version().get());
+        },
+        move |_| {
+            return get_user(cx);
+        },
+    );
+
+    // return the login or the content of the page depending on whether the user is logged in or not
+    let login_or_content = move || {
+        if let Some(Ok(_)) = user.read(cx) {
+            view! {cx, <Outlet />}.into_view(cx)
+        } else {
+            view! {cx, <LoginPage}.into_view(cx)
+        }
+    };
+
+    return view! {cx, <div>{login_or_content}</div> };
 }
