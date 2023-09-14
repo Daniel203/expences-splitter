@@ -69,7 +69,7 @@ pub fn Page(cx: Scope) -> impl IntoView {
         if let Some(Ok(_)) = user.read(cx) {
             view! {cx, <Outlet />}.into_view(cx)
         } else {
-            view! {cx, <LoginPage}.into_view(cx)
+            view! {cx, <LoginPage />}.into_view(cx)
         }
     };
 

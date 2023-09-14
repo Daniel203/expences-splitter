@@ -22,7 +22,12 @@ pub async fn get_user(cx: Scope) -> Result<Option<User>, ServerFnError> {
 
 #[server(Login, "/api")]
 pub async fn login(cx: Scope) -> Result<(), ServerFnError> {
-    todo!()
+    let auth = auth(cx)?;
+
+    auth.login_user(3);
+
+    log!("sono nella funzione di login");
+    return Ok(());
 }
 
 #[server(Register, "/api")]
@@ -37,14 +42,21 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
     return view! { cx,
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=action>
-                <h1>"Log In"</h1>
-                // <label> "User ID:" <input type="text" placeholder="User ID" maxlength="32" name="username" class="auth-input" /> </label>
-                // <br/>
-                // <label> "Password:" <input type="password" placeholder="Password" name="password" class="auth-input" /> </label>
-                // <br/>
-                // <label> <input type="checkbox" name="remember" class="auth-input" />"Remember me?"</label>
-                // <br/>
-                // <button type="submit" class="button">"Log In"</button>
+                <div class="grid grid-cols-3 grid-row-2 gap-y-8 w-80">
+                    <h1>"Log In"</h1>
+
+                    <div class="col-span-3 ">
+                        <label class="block text-white text-sm font-bold mb-2" for="username">Username</label>
+                        <input id="username" type="text" placeholder="Username" name="username"/>
+                    </div>
+
+                    <div class="col-span-3 ">
+                        <label class="block text-white text-sm font-bold mb-2" for="password">Password</label>
+                        <input id="password" type="password" placeholder="******" name="Password"/>
+                    </div>
+
+                    <button class="btn-primary btn-lg col-span-2" type="submit"><b>LOGIN</b></button>
+                </div>
             </ActionForm>
         </div>
     };
