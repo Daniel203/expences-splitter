@@ -4,38 +4,39 @@ use leptos_router::*;
 
 #[server(CreateRoom, "/api")]
 pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), ServerFnError> {
-    use crate::state::pool;
-    let pool = pool(cx)?;
-
-    let does_room_exists = sqlx::query_as!(Room, "SELECT * FROM rooms WHERE room_name = $1", room_name)
-        .fetch_optional(&pool)
-        .await?;
-
-    log!("does room exists: {:?}", does_room_exists);
-
-    if let Some(_) = does_room_exists {
-        return Err(ServerFnError::ServerError("Room already exists".to_string()));
-    } 
-
-    log!("creating room: {:?}", room_name);
-
-    // insert the room and return the new id
-    let res = sqlx::query_as!(Room, "INSERT INTO rooms (room_name, max_participants, owner) VALUES ($1, 20, 3) RETURNING *", room_name)
-        .fetch_one(&pool)
-        .await;
-
-    match res {
-        Ok(room) => {
-            log!("created room: {:?}", room);
-            let id = room.id;
-            leptos_axum::redirect(cx, &format!("/room/{}", id));
-            return Ok(());
-        },
-        Err(e) => {
-            log!("error creating room: {:?}", e);
-            return Err(ServerFnError::ServerError("Error creating room".to_string()));
-        }
-    }
+    todo!()
+    // use crate::state::pool;
+    // let pool = pool(cx)?;
+    //
+    // let does_room_exists = sqlx::query_as!(Room, "SELECT * FROM rooms WHERE room_name = $1", room_name)
+    //     .fetch_optional(&pool)
+    //     .await?;
+    //
+    // log!("does room exists: {:?}", does_room_exists);
+    //
+    // if let Some(_) = does_room_exists {
+    //     return Err(ServerFnError::ServerError("Room already exists".to_string()));
+    // } 
+    //
+    // log!("creating room: {:?}", room_name);
+    //
+    // // insert the room and return the new id
+    // let res = sqlx::query_as!(Room, "INSERT INTO rooms (room_name, max_participants, owner) VALUES ($1, 20, 3) RETURNING *", room_name)
+    //     .fetch_one(&pool)
+    //     .await;
+    //
+    // match res {
+    //     Ok(room) => {
+    //         log!("created room: {:?}", room);
+    //         let id = room.id;
+    //         leptos_axum::redirect(cx, &format!("/room/{}", id));
+    //         return Ok(());
+    //     },
+    //     Err(e) => {
+    //         log!("error creating room: {:?}", e);
+    //         return Err(ServerFnError::ServerError("Error creating room".to_string()));
+    //     }
+    // }
 }
 
 #[component]

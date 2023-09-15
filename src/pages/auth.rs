@@ -8,7 +8,8 @@ cfg_if! {
 if #[cfg(feature = "ssr")] {
     use sqlx::SqlitePool;
     use axum_session_auth::{SessionSqlitePool, Authentication, HasPermission};
-    use crate::state::auth;
+    use bcrypt::{verify, hash, DEFAULT_COST};
+    use crate::state::{auth, pool};
 
     pub type AuthSession = axum_session_auth::AuthSession<User, i64, SessionSqlitePool, SqlitePool>;
 }}
@@ -21,13 +22,32 @@ pub async fn get_user(cx: Scope) -> Result<Option<User>, ServerFnError> {
 }
 
 #[server(Login, "/api")]
-pub async fn login(cx: Scope) -> Result<(), ServerFnError> {
+pub async fn login(cx: Scope, username: String, password: String) -> Result<(), ServerFnError> {
+    log::info!("fn: login()");
+
+    let pool = pool(cx)?;
     let auth = auth(cx)?;
 
-    auth.login_user(3);
+    let mut user = User::get_user_from_username(username, &pool)
+        .await
+        .ok_or_else(|| {
+            log::info!("fn: login() - user does not exist");
+            return ServerFnError::ServerError("User does not exist".to_string());
+        })?;
 
-    log!("sono nella funzione di login");
-    return Ok(());
+    if verify(&password, &user.password)? {
+        log::info!("fn: login() - password is correct");
+        auth.login_user(user.id);
+
+        log::info!("fn: login() - redirecting to \"/\"");
+        leptos_axum::redirect(cx, "/");
+        return Ok(());
+    } else {
+        log::info!("fn: login() - password is incorrect");
+        return Err(ServerFnError::ServerError(
+            "Password is incorrect".to_string(),
+        ));
+    }
 }
 
 #[server(Register, "/api")]
@@ -52,10 +72,18 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
 
                     <div class="col-span-3 ">
                         <label class="block text-white text-sm font-bold mb-2" for="password">Password</label>
-                        <input id="password" type="password" placeholder="******" name="Password"/>
+                        <input id="password" type="password" placeholder="******" name="password"/>
                     </div>
 
-                    <button class="btn-primary btn-lg col-span-2" type="submit"><b>LOGIN</b></button>
+                    <button class="btn-primary btn-lg col-span-3" type="submit"><b>LOGIN</b></button>
+
+                    <div class="col-span-3 w-80">
+                        <p class="text-center">"Don't have an account? "
+                            <A href="/register"><b><u>"Register now!"</u></b></A>
+                        </p>
+                    </div>
+
+
                 </div>
             </ActionForm>
         </div>

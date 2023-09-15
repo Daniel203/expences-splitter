@@ -64,14 +64,15 @@ pub fn Page(cx: Scope) -> impl IntoView {
         },
     );
 
-    // return the login or the content of the page depending on whether the user is logged in or not
-    let login_or_content = move || {
-        if let Some(Ok(_)) = user.read(cx) {
-            view! {cx, <Outlet />}.into_view(cx)
-        } else {
-            view! {cx, <LoginPage />}.into_view(cx)
-        }
+    return view! {cx,
+        <Transition fallback=move || view! { cx, <p>"Loading..."</p>} >
+            {move || {
+                if let Some(Ok(Some(_))) = user.read(cx) {  
+                    return view! {cx, <Outlet />}.into_view(cx);
+                } else {  
+                    return view! {cx, <LoginPage />}.into_view(cx);
+                }
+            }}
+        </Transition>
     };
-
-    return view! {cx, <div>{login_or_content}</div> };
 }

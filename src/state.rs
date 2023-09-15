@@ -1,11 +1,9 @@
 use cfg_if::cfg_if;
 use leptos::use_context;
 
-use crate::models::user::User;
-
 cfg_if! {
     if #[cfg(feature = "ssr")] {
-        use leptos::{LeptosOptions, ServerFnError, Scope, log};
+        use leptos::{LeptosOptions, ServerFnError, Scope};
         use sqlx::SqlitePool;
         use axum::extract::FromRef;
         use leptos_router::RouteListing;
