@@ -46,35 +46,50 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
     let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
 
     return view! { cx,
-    <div class="flex h-screen justify-center items-center">
-        <ActionForm action=create_room>
+        <div class="flex h-screen justify-center items-center">
+            <ActionForm action=create_room>
 
-            <div class="grid grid-cols-3 grid-row-2 gap-y-8 w-80">
+                <div class="grid grid-cols-3 grid-row-2 gap-y-8 w-80">
 
-                <div class="col-span-3">
-                    <label class="block text-white text-sm font-bold mb-2" for="room_name">Enter the Room Name</label>
-                    <input id="room_name" type="text" placeholder="Room Name" name="room_name"/>
+                    <div class="col-span-3">
+                        <label class="block text-white text-sm font-bold mb-2" for="room_name">
+                            Enter the Room Name
+                        </label>
+                        <input id="room_name" type="text" placeholder="Room Name" name="room_name"/>
+                    </div>
+
+                    <A href="/">
+                        <button class="btn-warn btn-lg col-span-1">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="3"
+                                stroke="currentColor"
+                                class="w-6 h-6"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                                ></path>
+                            </svg>
+                        </button>
+                    </A>
+
+                    <button class="btn-primary btn-lg col-span-2" type="submit">
+                        <b>CREATE</b>
+                    </button>
+
                 </div>
 
-                <A href="/">
-                    <button class="btn-warn btn-lg col-span-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-6 h-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
-                    </button>
-                </A>
+            </ActionForm>
 
-                <button class="btn-primary btn-lg col-span-2" type="submit"><b>CREATE</b></button>
+            <Show when=has_error fallback=|_| ()>
+                // TODO: create message that says error
+                <div></div>
+            </Show>
 
-            </div>
-
-        </ActionForm>
-
-        <Show when=has_error fallback=|_| ()>
-            // TODO: create message that says error
-            <div></div>
-        </Show>
-
-    </div>
+        </div>
     };
 }

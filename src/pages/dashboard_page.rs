@@ -18,7 +18,7 @@ pub fn DashboardPage(cx: Scope) -> impl IntoView {
 
     return view! { cx,
         <div class="flex h-screen justify-center items-center">
-            <p>{ id }</p>
+            <p>{id}</p>
         </div>
     };
 }

@@ -5,16 +5,18 @@ use leptos_router::*;
 pub fn HomePage(cx: Scope) -> impl IntoView {
     return view! { cx,
         <div class="flex h-screen justify-center items-center">
-            <div class="flex flex-col space-y-8">
+            <div class="flex flex-col space-y-6 w-80">
                 <A href="join">
-                    <button class="btn-primary btn-xxl w-80" >
-                        <b>ENTER</b> an existing room
+                    <button class="btn btn-primary btn-lg w-full">
+                        <b>ENTER</b>
+                        an existing room
                     </button>
                 </A>
 
                 <A href="new">
-                    <button class="btn-primary btn-xxl w-80">
-                        <b>CREATE</b> a new room
+                    <button class="btn btn-primary btn-lg w-full">
+                        <b>CREATE</b>
+                        a new room
                     </button>
                 </A>
             </div>

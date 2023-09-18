@@ -30,17 +30,17 @@ pub fn App(cx: Scope) -> impl IntoView {
         <Router fallback=|cx| {
             let mut outside_errors = Errors::default();
             outside_errors.insert_with_default_key(AppError::NotFound);
-            view! { cx, <ErrorTemplate outside_errors/> } .into_view(cx)
+            view! { cx, <ErrorTemplate outside_errors/> }.into_view(cx)
         }>
-            <main class="h-screen bg-primaryBg">
+            <main class="h-screen">
                 <Routes>
                     <Route path="" view=|cx| view! { cx, <Page/> }>
                         <Route path="" view=|cx| view! { cx, <HomePage/> }/>
                         <Route path="new" view=|cx| view! { cx, <CreateRoomPage/> }/>
                         <Route path="join" view=|cx| view! { cx, <JoinRoomPage/> }/>
                         <Route path="room/:id" view=|cx| view! { cx, <DashboardPage/> }/>
-                        <Route path="register" view=|cx| view! { cx, <RegisterPage /> }/>
-                        <Route path="login" view=|cx| view! { cx, <LoginPage /> }/>
+                        <Route path="register" view=|cx| view! { cx, <RegisterPage/> }/>
+                        <Route path="login" view=|cx| view! { cx, <LoginPage/> }/>
                     </Route>
                 </Routes>
             </main>
@@ -64,15 +64,18 @@ pub fn Page(cx: Scope) -> impl IntoView {
         },
     );
 
-    return view! {cx,
-        <Transition fallback=move || view! { cx, <p>"Loading..."</p>} >
+    return view! { cx,
+        <Transition fallback=move || {
+            view! { cx, <p>"Loading..."</p> }
+        }>
             {move || {
-                if let Some(Ok(Some(_))) = user.read(cx) {  
-                    return view! {cx, <Outlet />}.into_view(cx);
-                } else {  
-                    return view! {cx, <LoginPage />}.into_view(cx);
+                if let Some(Ok(Some(_))) = user.read(cx) {
+                    return view! { cx, <Outlet/> }.into_view(cx);
+                } else {
+                    return view! { cx, <LoginPage/> }.into_view(cx);
                 }
             }}
+
         </Transition>
     };
 }
