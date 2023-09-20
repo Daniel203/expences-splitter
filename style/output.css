@@ -974,6 +974,15 @@ html {
   outline-color: hsl(var(--p) / 1);
 }
 
+.input-error {
+  --tw-border-opacity: 1;
+  border-color: hsl(var(--er) / var(--tw-border-opacity));
+}
+
+.input-error:focus {
+  outline-color: hsl(var(--er) / 1);
+}
+
 .input-disabled,
   .input:disabled,
   .input[disabled] {
@@ -1244,6 +1253,10 @@ html {
   margin-left: -1px;
 }
 
+.static {
+  position: static;
+}
+
 .relative {
   position: relative;
 }
@@ -1262,6 +1275,10 @@ html {
 
 .mb-2 {
   margin-bottom: 0.5rem;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
 }
 
 .block {
@@ -1338,6 +1355,15 @@ html {
 
 .font-bold {
   font-weight: 700;
+}
+
+.text-error {
+  --tw-text-opacity: 1;
+  color: hsl(var(--er) / var(--tw-text-opacity));
+}
+
+.text-transparent {
+  color: transparent;
 }
 
 .text-white {

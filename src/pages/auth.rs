@@ -2,7 +2,10 @@ use cfg_if::cfg_if;
 use leptos::*;
 use leptos_router::*;
 
-use crate::models::user::User;
+use crate::{
+    components::input_component::{InputComponent, InputParams},
+    models::user::User,
+};
 
 cfg_if! {
 if #[cfg(feature = "ssr")] {
@@ -16,9 +19,27 @@ if #[cfg(feature = "ssr")] {
 
 #[server(GetUser, "/api")]
 pub async fn get_user(cx: Scope) -> Result<Option<User>, ServerFnError> {
+    log::info!("fn: get_user()");
     let auth = auth(cx)?;
 
-    return Ok(auth.current_user);
+    let user = auth.current_user;
+    log::info!("fn: get_user() - user: {:?}", user);
+
+    return Ok(user);
+}
+
+#[server(Logout, "/api")]
+pub async fn logout(cx: Scope) -> Result<(), ServerFnError> {
+    log::info!("fn: logout()");
+    let auth = auth(cx)?;
+
+    log::info!("fn: logout() - logging out user");
+    auth.logout_user();
+
+    log::info!("fn: logout() - redirecting to \"/\"");
+    leptos_axum::redirect(cx, "/");
+
+    return Ok(());
 }
 
 #[server(Login, "/api")]
@@ -37,6 +58,7 @@ pub async fn login(cx: Scope, username: String, password: String) -> Result<(), 
 
     if verify(&password, &user.password)? {
         log::info!("fn: login() - password is correct");
+        log::info!("fn: login() - logging in user");
         auth.login_user(user.id);
 
         log::info!("fn: login() - redirecting to \"/\"");
@@ -51,8 +73,46 @@ pub async fn login(cx: Scope, username: String, password: String) -> Result<(), 
 }
 
 #[server(Register, "/api")]
-pub async fn register(cx: Scope) -> Result<(), ServerFnError> {
-    todo!()
+pub async fn register(
+    cx: Scope,
+    username: String,
+    password: String,
+    confirm_password: String,
+) -> Result<(), ServerFnError> {
+    log::info!("fn: register()");
+
+    let pool = pool(cx)?;
+    let auth = auth(cx)?;
+
+    if password != confirm_password {
+        log::info!("fn: register() - passwords do not match");
+        return Err(ServerFnError::ServerError(
+            "Passwords do not match".to_string(),
+        ));
+    }
+
+    let hashed_password = hash(password, DEFAULT_COST).unwrap();
+
+    log::info!("fn: register() - creating user on the database");
+    sqlx::query("INSERT INTO users (username, password) VALUES (?, ?)")
+        .bind(&username)
+        .bind(&hashed_password)
+        .execute(&pool)
+        .await?;
+
+    log::info!("fn: register() - logging in user");
+    let user = User::get_user_from_username(username, &pool)
+        .await
+        .ok_or_else(|| {
+            return ServerFnError::ServerError("User not found".to_string());
+        })?;
+
+    auth.login_user(user.id);
+
+    log::info!("fn: register() - redirecting to \"/\"");
+    leptos_axum::redirect(cx, "/");
+
+    return Ok(());
 }
 
 #[component]
@@ -79,6 +139,7 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
                         placeholder="Username"
                         name="username"
                         on:input=move |ev| set_username.update(|x| *x = event_target_value(&ev))
+                        required
                     />
                 </div>
 
@@ -90,6 +151,7 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
                         placeholder="******"
                         name="password"
                         on:input=move |ev| set_password.update(|x| *x = event_target_value(&ev))
+                        required
                     />
                 </div>
 
@@ -122,34 +184,67 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
 
     let (username, set_username) = create_signal(cx, String::new());
     let (password, set_password) = create_signal(cx, String::new());
-    let (password_2, set_password_2) = create_signal(cx, String::new());
+    let (confirm_password, set_confirm_password) = create_signal(cx, String::new());
 
-    let is_form_valid = move || {
-        // TODO: control also that the username and password are valid (min_length, etc.)
-        return !username.with(String::is_empty)
-            && !password.with(String::is_empty)
-            && !password_2.with(String::is_empty)
-            && password() == password_2();
+    let (username_touched, set_username_touched) = create_signal(cx, false);
+    let (password_touched, set_password_touched) = create_signal(cx, false);
+    let (confirm_password_touched, set_confirm_password_touched) = create_signal(cx, false);
+
+    const USERNAME_MIN_LENGTH: usize = 5;
+    const PASSWORD_MIN_LENGTH: usize = 8;
+
+    let username_error = move || {
+        if username.with(String::is_empty) {
+            return Some("Username cannot be empty".to_string());
+        } else if username.with(|x| x.len() < PASSWORD_MIN_LENGTH) {
+            return Some(format!(
+                "Username must be at least {} characters long",
+                USERNAME_MIN_LENGTH
+            ));
+        } else {
+            return None;
+        }
     };
 
-    // let username_error = move || {
-    //     if username.with(String::is_empty) {
-    //         return Some("Username cannot be empty");
-    //     } else if username.with(|x| x.len() < 5) {
-    //         return Some("Username must be at least 5 characters long");
-    //     } else {
-    //         return None;
-    //     }
-    // };
-    //
-    // let password_error = move || {
-    //     if password.with(String::is_empty) {
-    //         return Some("Password cannot be empty");
-    //     } else if password.with(|x| x.len() < 8) {
-    //         return Some("Password must be at least 8 characters long");
-    //     } else {
-    //         return None;
-    //     }
+    let password_error = move || {
+        if password.with(String::is_empty) {
+            return Some("Password cannot be empty".to_string());
+        } else if password.with(|x| x.len() < PASSWORD_MIN_LENGTH) {
+            return Some(format!(
+                "Password must be at least {} characters long",
+                PASSWORD_MIN_LENGTH
+            ));
+        } else {
+            return None;
+        }
+    };
+
+    let confirm_password_error = move || {
+        if confirm_password.with(String::is_empty) {
+            return Some("Password cannot be empty".to_string());
+        } else if confirm_password.with(|x| *x != password.get()) {
+            return Some("Passwords do not match".to_string());
+        } else {
+            return None;
+        }
+    };
+
+    let is_form_valid = move || {
+        return username_error().is_none()
+            && password_error().is_none()
+            && confirm_password_error().is_none();
+    };
+
+    // let params = InputParams {
+    //     label: "Username".into(),
+    //     placeholder: "Username".into(),
+    //     name: "username".into(),
+    //     value: username,
+    //     set_value: set_username,
+    //     value_touched: username_touched,
+    //     set_value_touched: set_username_touched,
+    //     value_error: Box::new(username_error),
+    //     // value_error: username_error,
     // };
 
     return view! { cx,
@@ -157,37 +252,127 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
             <ActionForm action=action class="space-y-6 w-80">
                 <p class="text-3xl font-bold">"Register"</p>
 
+                // <InputComponent params=params />
+
                 <div class="form-control w-full">
                     <label class="label-text font-bold mb-2">Username</label>
                     <input
                         class="input input-bordered input-primary w-full"
+                        class=(
+                            "input-error",
+                            move || username_touched() && username_error().is_some(),
+                        )
+                        class=(
+                            "input-primary",
+                            move || !username_touched() || username_error().is_none(),
+                        )
                         type="text"
                         placeholder="Username"
                         name="username"
                         on:input=move |ev| set_username.update(|x| *x = event_target_value(&ev))
+                        on:blur=move |_| set_username_touched(true)
+                        required
                     />
+                    <label>
+                        {move || {
+                            if username_touched() && username_error().is_some() {
+                                view! { cx,
+                                    <span class="label-text-alt text-error">
+                                        {move || username_error}
+                                    </span>
+                                }
+                            } else {
+                                view! { cx,
+                                    <span class="label-text-alt text-transparent">
+                                        Username error
+                                    </span>
+                                }
+                            }
+                        }}
+
+                    </label>
                 </div>
 
                 <div class="form-control w-full">
                     <label class="label-text font-bold mb-2">Password</label>
                     <input
-                        class="input input-bordered input-primary w-full"
+                        class="input input-bordered w-full"
+                        class=(
+                            "input-error",
+                            move || password_touched() && password_error().is_some(),
+                        )
+                        class=(
+                            "input-primary",
+                            move || !password_touched() || password_error().is_none(),
+                        )
                         type="password"
                         placeholder="******"
                         name="password"
                         on:input=move |ev| set_password.update(|x| *x = event_target_value(&ev))
+                        on:blur=move |_| set_password_touched(true)
+                        required
                     />
+                    <label>
+                        {move || {
+                            if password_touched() && password_error().is_some() {
+                                view! { cx,
+                                    <span class="label-text-alt text-error">
+                                        {move || password_error}
+                                    </span>
+                                }
+                            } else {
+                                view! { cx,
+                                    <span class="label-text-alt text-transparent">
+                                        Password error
+                                    </span>
+                                }
+                            }
+                        }}
+
+                    </label>
                 </div>
 
                 <div class="form-control w-full">
                     <label class="label-text font-bold mb-2">Repeat Password</label>
                     <input
                         class="input input-bordered input-primary w-full"
+                        class=(
+                            "input-error",
+                            move || confirm_password_touched() && confirm_password_error().is_some(),
+                        )
+                        class=(
+                            "input-primary",
+                            move || {
+                                !confirm_password_touched() || confirm_password_error().is_none()
+                            },
+                        )
                         type="password"
                         placeholder="******"
-                        name="password_2"
-                        on:input=move |ev| set_password_2.update(|x| *x = event_target_value(&ev))
+                        name="confirm_password"
+                        on:input=move |ev| {
+                            set_confirm_password.update(|x| *x = event_target_value(&ev))
+                        }
+                        on:blur=move |_| set_confirm_password_touched(true)
+                        required
                     />
+                    <label>
+                        {move || {
+                            if confirm_password_touched() && confirm_password_error().is_some() {
+                                view! { cx,
+                                    <span class="label-text-alt text-error">
+                                        {move || confirm_password_error}
+                                    </span>
+                                }
+                            } else {
+                                view! { cx,
+                                    <span class="label-text-alt text-transparent">
+                                        Password error
+                                    </span>
+                                }
+                            }
+                        }}
+
+                    </label>
                 </div>
 
                 <button
@@ -211,4 +396,12 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
             </ActionForm>
         </div>
     };
+}
+
+#[component]
+pub fn LogoutPage(cx: Scope) -> impl IntoView {
+    let action = create_server_action::<Logout>(cx);
+    action.dispatch(Logout {});
+
+    return view! { cx, <div></div> };
 }

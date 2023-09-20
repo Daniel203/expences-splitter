@@ -4,6 +4,7 @@ pub mod models;
 pub mod pages;
 pub mod state;
 pub mod error_template;
+pub mod components;
 use cfg_if::cfg_if;
 
 cfg_if! {
