@@ -3,7 +3,7 @@ use leptos::*;
 use leptos_router::*;
 
 use crate::{
-    components::input_component::{InputComponent, InputParams},
+    components::input_component::{InputWithControlsComponent, InputWithControlsParams, InputType},
     models::user::User,
 };
 
@@ -196,7 +196,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
     let username_error = move || {
         if username.with(String::is_empty) {
             return Some("Username cannot be empty".to_string());
-        } else if username.with(|x| x.len() < PASSWORD_MIN_LENGTH) {
+        } else if username.with(|x| x.len() < USERNAME_MIN_LENGTH) {
             return Some(format!(
                 "Username must be at least {} characters long",
                 USERNAME_MIN_LENGTH
@@ -235,145 +235,50 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
             && confirm_password_error().is_none();
     };
 
-    // let params = InputParams {
-    //     label: "Username".into(),
-    //     placeholder: "Username".into(),
-    //     name: "username".into(),
-    //     value: username,
-    //     set_value: set_username,
-    //     value_touched: username_touched,
-    //     set_value_touched: set_username_touched,
-    //     value_error: Box::new(username_error),
-    //     // value_error: username_error,
-    // };
+    let username_params = InputWithControlsParams {
+        label: "Username",
+        placeholder: "Username",
+        name: "username",
+        input_type: InputType::Text,
+        value: username,
+        set_value: set_username,
+        value_touched: username_touched,
+        set_value_touched: set_username_touched,
+        value_error: username_error,
+    };
+
+    let password_params = InputWithControlsParams {
+        label: "Password",
+        placeholder: "******",
+        name: "password",
+        input_type: InputType::Password,
+        value: password,
+        set_value: set_password,
+        value_touched: password_touched,
+        set_value_touched: set_password_touched,
+        value_error: password_error,
+    };
+
+    let confirm_password_params = InputWithControlsParams {
+        label: "Confirm password",
+        placeholder: "******",
+        name: "confirm_password",
+        input_type: InputType::Password,
+        value: confirm_password,
+        set_value: set_confirm_password,
+        value_touched: confirm_password_touched,
+        set_value_touched: set_confirm_password_touched,
+        value_error: confirm_password_error,
+    };
 
     return view! { cx,
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=action class="space-y-6 w-80">
                 <p class="text-3xl font-bold">"Register"</p>
 
-                // <InputComponent params=params />
-
-                <div class="form-control w-full">
-                    <label class="label-text font-bold mb-2">Username</label>
-                    <input
-                        class="input input-bordered input-primary w-full"
-                        class=(
-                            "input-error",
-                            move || username_touched() && username_error().is_some(),
-                        )
-                        class=(
-                            "input-primary",
-                            move || !username_touched() || username_error().is_none(),
-                        )
-                        type="text"
-                        placeholder="Username"
-                        name="username"
-                        on:input=move |ev| set_username.update(|x| *x = event_target_value(&ev))
-                        on:blur=move |_| set_username_touched(true)
-                        required
-                    />
-                    <label>
-                        {move || {
-                            if username_touched() && username_error().is_some() {
-                                view! { cx,
-                                    <span class="label-text-alt text-error">
-                                        {move || username_error}
-                                    </span>
-                                }
-                            } else {
-                                view! { cx,
-                                    <span class="label-text-alt text-transparent">
-                                        Username error
-                                    </span>
-                                }
-                            }
-                        }}
-
-                    </label>
-                </div>
-
-                <div class="form-control w-full">
-                    <label class="label-text font-bold mb-2">Password</label>
-                    <input
-                        class="input input-bordered w-full"
-                        class=(
-                            "input-error",
-                            move || password_touched() && password_error().is_some(),
-                        )
-                        class=(
-                            "input-primary",
-                            move || !password_touched() || password_error().is_none(),
-                        )
-                        type="password"
-                        placeholder="******"
-                        name="password"
-                        on:input=move |ev| set_password.update(|x| *x = event_target_value(&ev))
-                        on:blur=move |_| set_password_touched(true)
-                        required
-                    />
-                    <label>
-                        {move || {
-                            if password_touched() && password_error().is_some() {
-                                view! { cx,
-                                    <span class="label-text-alt text-error">
-                                        {move || password_error}
-                                    </span>
-                                }
-                            } else {
-                                view! { cx,
-                                    <span class="label-text-alt text-transparent">
-                                        Password error
-                                    </span>
-                                }
-                            }
-                        }}
-
-                    </label>
-                </div>
-
-                <div class="form-control w-full">
-                    <label class="label-text font-bold mb-2">Repeat Password</label>
-                    <input
-                        class="input input-bordered input-primary w-full"
-                        class=(
-                            "input-error",
-                            move || confirm_password_touched() && confirm_password_error().is_some(),
-                        )
-                        class=(
-                            "input-primary",
-                            move || {
-                                !confirm_password_touched() || confirm_password_error().is_none()
-                            },
-                        )
-                        type="password"
-                        placeholder="******"
-                        name="confirm_password"
-                        on:input=move |ev| {
-                            set_confirm_password.update(|x| *x = event_target_value(&ev))
-                        }
-                        on:blur=move |_| set_confirm_password_touched(true)
-                        required
-                    />
-                    <label>
-                        {move || {
-                            if confirm_password_touched() && confirm_password_error().is_some() {
-                                view! { cx,
-                                    <span class="label-text-alt text-error">
-                                        {move || confirm_password_error}
-                                    </span>
-                                }
-                            } else {
-                                view! { cx,
-                                    <span class="label-text-alt text-transparent">
-                                        Password error
-                                    </span>
-                                }
-                            }
-                        }}
-
-                    </label>
-                </div>
+                <InputWithControlsComponent params=username_params/>
+                <InputWithControlsComponent params=password_params/>
+                <InputWithControlsComponent params=confirm_password_params/>
 
                 <button
                     class="btn btn-primary btn-lg w-full"
