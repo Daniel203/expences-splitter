@@ -3,7 +3,9 @@ use leptos::*;
 use leptos_router::*;
 
 use crate::{
-    components::input_component::{InputWithControlsComponent, InputWithControlsParams, InputType},
+    components::input_component::{
+        InputComponent, InputParams, InputType, InputWithControlsComponent, InputWithControlsParams,
+    },
     models::user::User,
 };
 
@@ -126,34 +128,29 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
         return !username.with(String::is_empty) && !password.with(String::is_empty);
     };
 
+    let username_params = InputParams {
+        label: "Username",
+        placeholder: "username",
+        name: "username",
+        input_type: InputType::Text,
+        value: (username, set_username),
+    };
+
+    let password_params = InputParams {
+        label: "Password",
+        placeholder: "******",
+        name: "password",
+        input_type: InputType::Password,
+        value: (password, set_password),
+    };
+
     return view! { cx,
         <div class="flex h-screen justify-center items-center">
-            <ActionForm action=action class="space-y-6 w-80">
-                <p class="text-3xl font-bold">"Log In"</p>
+            <ActionForm action=action class="space-y-3 w-80">
+                <p class="text-3xl font-bold mb-6">"Log In"</p>
 
-                <div class="form-control w-full">
-                    <label class="label-text font-bold mb-2">Username</label>
-                    <input
-                        class="input input-bordered input-primary w-full"
-                        type="text"
-                        placeholder="Username"
-                        name="username"
-                        on:input=move |ev| set_username.update(|x| *x = event_target_value(&ev))
-                        required
-                    />
-                </div>
-
-                <div class="form-control w-full">
-                    <label class="label-text font-bold mb-2">Password</label>
-                    <input
-                        class="input input-bordered input-primary w-full"
-                        type="password"
-                        placeholder="******"
-                        name="password"
-                        on:input=move |ev| set_password.update(|x| *x = event_target_value(&ev))
-                        required
-                    />
-                </div>
+                <InputComponent params=username_params />
+                <InputComponent params=password_params />
 
                 <button
                     class="btn btn-primary btn-lg w-full"
@@ -185,10 +182,6 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
     let (username, set_username) = create_signal(cx, String::new());
     let (password, set_password) = create_signal(cx, String::new());
     let (confirm_password, set_confirm_password) = create_signal(cx, String::new());
-
-    let (username_touched, set_username_touched) = create_signal(cx, false);
-    let (password_touched, set_password_touched) = create_signal(cx, false);
-    let (confirm_password_touched, set_confirm_password_touched) = create_signal(cx, false);
 
     const USERNAME_MIN_LENGTH: usize = 5;
     const PASSWORD_MIN_LENGTH: usize = 8;
@@ -240,10 +233,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
         placeholder: "Username",
         name: "username",
         input_type: InputType::Text,
-        value: username,
-        set_value: set_username,
-        value_touched: username_touched,
-        set_value_touched: set_username_touched,
+        value: (username, set_username),
         value_error: username_error,
     };
 
@@ -252,10 +242,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
         placeholder: "******",
         name: "password",
         input_type: InputType::Password,
-        value: password,
-        set_value: set_password,
-        value_touched: password_touched,
-        set_value_touched: set_password_touched,
+        value: (password, set_password),
         value_error: password_error,
     };
 
@@ -264,17 +251,14 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
         placeholder: "******",
         name: "confirm_password",
         input_type: InputType::Password,
-        value: confirm_password,
-        set_value: set_confirm_password,
-        value_touched: confirm_password_touched,
-        set_value_touched: set_confirm_password_touched,
+        value: (confirm_password, set_confirm_password),
         value_error: confirm_password_error,
     };
 
     return view! { cx,
         <div class="flex h-screen justify-center items-center">
-            <ActionForm action=action class="space-y-6 w-80">
-                <p class="text-3xl font-bold">"Register"</p>
+            <ActionForm action=action class="space-y-3 w-80">
+                <p class="text-3xl font-bold mb-6">"Register"</p>
 
                 <InputWithControlsComponent params=username_params/>
                 <InputWithControlsComponent params=password_params/>
