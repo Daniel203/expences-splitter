@@ -7,4 +7,7 @@ pub struct Room {
     pub room_name: String,
     pub max_participants: i64,
     pub owner: i64,
+
+    #[cfg(feature = "ssr")]
+    pub created_at: Option<sqlx::types::chrono::NaiveDateTime>,
 }
