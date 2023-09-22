@@ -5,7 +5,7 @@ use leptos_router::*;
 use crate::{
     error_template::{AppError, ErrorTemplate},
     pages::{
-        auth::{get_user, GetUser, Login, LoginPage, Logout, LogoutPage, Register, RegisterPage},
+        auth::{get_user, Login, LoginPage, Logout, LogoutPage, Register, RegisterPage},
         create_room_page::CreateRoomPage,
         dashboard_page::DashboardPage,
         home_page::HomePage,
@@ -59,36 +59,36 @@ pub fn Page(cx: Scope) -> impl IntoView {
     let user = create_resource(
         cx,
         move || {
-            return (
+            (
                 login.version().get(),
                 register.version().get(),
                 logout.version().get(),
-            );
+            )
         },
         move |_| {
-            return get_user(cx);
+            get_user(cx)
         },
     );
 
-    return view! { cx,
+    view! { cx,
         <Transition fallback=move || {
             view! { cx, <p>"Loading..."</p> }
         }>
             {move || {
                 if let Some(Ok(Some(_))) = user.read(cx) {
-                    return view! { cx, <Outlet/> }.into_view(cx);
+                    view! { cx, <Outlet/> }.into_view(cx)
                 } else {
-                    return view! { cx, <UserNotAuthenticated/> }.into_view(cx);
+                    view! { cx, <UserNotAuthenticated/> }.into_view(cx)
                 }
             }}
 
         </Transition>
-    };
+    }
 }
 
 #[component]
 pub fn UserNotAuthenticated(cx: Scope) -> impl IntoView {
-    return view! { cx,
+    view! { cx,
         <div class="flex h-screen justify-center items-center">
             <div>
                 <p class="font-bold text-3xl mb-6">"You are not logged in"</p>
@@ -108,5 +108,5 @@ pub fn UserNotAuthenticated(cx: Scope) -> impl IntoView {
                 </p>
             </div>
         </div>
-    };
+    }
 }

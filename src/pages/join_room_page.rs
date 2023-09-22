@@ -12,7 +12,7 @@ pub fn JoinRoomPage(cx: Scope) -> impl IntoView {
         set_room_id(value);
     };
 
-    return view! { cx,
+    view! { cx,
         <div class="flex h-screen justify-center items-center">
             <form on:submit=on_submit id="form">
 
@@ -57,5 +57,5 @@ pub fn JoinRoomPage(cx: Scope) -> impl IntoView {
                 </div>
             </form>
         </div>
-    };
+    }
 }

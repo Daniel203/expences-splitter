@@ -1,4 +1,4 @@
-use crate::models::room::Room;
+
 use leptos::*;
 use leptos_router::*;
 
@@ -45,7 +45,7 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
     let value = create_room.value();
     let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
 
-    return view! { cx,
+    view! { cx,
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=create_room>
 
@@ -91,5 +91,5 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
             </Show>
 
         </div>
-    };
+    }
 }

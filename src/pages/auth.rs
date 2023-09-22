@@ -125,7 +125,7 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
     let (password, set_password) = create_signal(cx, String::new());
 
     let is_form_valid = move || {
-        return !username.with(String::is_empty) && !password.with(String::is_empty);
+        !username.with(String::is_empty) && !password.with(String::is_empty)
     };
 
     let username_params = InputParams {
@@ -144,7 +144,7 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
         value: (password, set_password),
     };
 
-    return view! { cx,
+    view! { cx,
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=action class="space-y-3 w-80">
                 <p class="text-3xl font-bold mb-6">"Log In"</p>
@@ -172,7 +172,7 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
 
             </ActionForm>
         </div>
-    };
+    }
 }
 
 #[component]
@@ -188,7 +188,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
 
     let username_error = move || {
         if username.with(String::is_empty) {
-            return Some("Username cannot be empty".to_string());
+            Some("Username cannot be empty".to_string())
         } else if username.with(|x| x.len() < USERNAME_MIN_LENGTH) {
             return Some(format!(
                 "Username must be at least {} characters long",
@@ -201,7 +201,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
 
     let password_error = move || {
         if password.with(String::is_empty) {
-            return Some("Password cannot be empty".to_string());
+            Some("Password cannot be empty".to_string())
         } else if password.with(|x| x.len() < PASSWORD_MIN_LENGTH) {
             return Some(format!(
                 "Password must be at least {} characters long",
@@ -214,7 +214,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
 
     let confirm_password_error = move || {
         if confirm_password.with(String::is_empty) {
-            return Some("Password cannot be empty".to_string());
+            Some("Password cannot be empty".to_string())
         } else if confirm_password.with(|x| *x != password.get()) {
             return Some("Passwords do not match".to_string());
         } else {
@@ -223,9 +223,9 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
     };
 
     let is_form_valid = move || {
-        return username_error().is_none()
+        username_error().is_none()
             && password_error().is_none()
-            && confirm_password_error().is_none();
+            && confirm_password_error().is_none()
     };
 
     let username_params = InputWithControlsParams {
@@ -255,7 +255,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
         value_error: confirm_password_error,
     };
 
-    return view! { cx,
+    view! { cx,
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=action class="space-y-3 w-80">
                 <p class="text-3xl font-bold mb-6">"Register"</p>
@@ -284,7 +284,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
 
             </ActionForm>
         </div>
-    };
+    }
 }
 
 #[component]
@@ -292,5 +292,5 @@ pub fn LogoutPage(cx: Scope) -> impl IntoView {
     let action = create_server_action::<Logout>(cx);
     action.dispatch(Logout {});
 
-    return view! { cx, <div></div> };
+    view! { cx, <div></div> }
 }

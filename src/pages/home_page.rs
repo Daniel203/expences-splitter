@@ -3,7 +3,7 @@ use leptos_router::*;
 
 #[component]
 pub fn HomePage(cx: Scope) -> impl IntoView {
-    return view! { cx,
+    view! { cx,
         <div class="flex h-screen justify-center items-center">
             <div class="flex flex-col space-y-6 w-80">
                 <A href="join">
@@ -21,5 +21,5 @@ pub fn HomePage(cx: Scope) -> impl IntoView {
                 </A>
             </div>
         </div>
-    };
+    }
 }

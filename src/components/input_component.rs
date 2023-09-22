@@ -41,9 +41,7 @@ where
 
 #[component]
 pub fn InputComponent( cx: Scope, params: InputParams,) -> impl IntoView {
-    let (value_touched, set_value_touched) = create_signal(cx, false);
-
-    return view! { cx,
+    view! { cx,
         <div class="form-control w-full">
             <label class="label-text font-bold mb-2">{params.label}</label>
             <input
@@ -52,14 +50,13 @@ pub fn InputComponent( cx: Scope, params: InputParams,) -> impl IntoView {
                 placeholder=params.placeholder
                 name=params.name
                 on:input=move |ev| params.value.1.update(|x| *x = event_target_value(&ev))
-                on:blur=move |_| set_value_touched(true)
                 required
             />
             <label>
                 <span class="label-text-alt text-transparent">Username error</span>
             </label>
         </div>
-    };
+    }
 }
 
 #[component]
@@ -69,14 +66,14 @@ pub fn InputWithControlsComponent<T: Fn() -> Option<String> + 'static + Clone + 
 ) -> impl IntoView {
     let (value_touched, set_value_touched) = create_signal(cx, false);
 
-    return view! { cx,
+    view! { cx,
         <div class="form-control w-full">
             <label class="label-text font-bold mb-2">{params.label}</label>
             <input
                 class="input input-bordered input-primary w-full"
                 class=(
                     "input-error",
-                    move || value_touched() && (params.clone().value_error)().is_some(),
+                    move || value_touched() && (params.value_error)().is_some(),
                 )
                 type=params.input_type.as_str()
                 placeholder=params.placeholder
@@ -103,5 +100,5 @@ pub fn InputWithControlsComponent<T: Fn() -> Option<String> + 'static + Clone + 
 
             </label>
         </div>
-    };
+    }
 }
