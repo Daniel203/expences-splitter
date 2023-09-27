@@ -149,8 +149,8 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
             <ActionForm action=action class="space-y-3 w-80">
                 <p class="text-3xl font-bold mb-6">"Log In"</p>
 
-                <InputComponent params=username_params />
-                <InputComponent params=password_params />
+                <InputComponent params=username_params/>
+                <InputComponent params=password_params/>
 
                 <button
                     class="btn btn-primary btn-lg w-full"

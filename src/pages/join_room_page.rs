@@ -1,61 +1,108 @@
-use leptos::{ev::SubmitEvent, html::Input, *};
+use leptos::*;
 use leptos_router::*;
+
+use crate::components::{
+    input_component::{InputComponent, InputParams, InputType},
+    notification_component::{NotificationComponent, NotificationParams, NotificationType},
+};
+
+#[server(JoinRoom, "/api")]
+pub async fn join_room(cx: leptos::Scope, room_name: String) -> Result<(), ServerFnError> {
+    use crate::models::room::Room;
+    use crate::state::pool;
+
+    let pool = pool(cx)?;
+
+    let does_room_exists =
+        sqlx::query_as!(Room, "SELECT * FROM rooms WHERE room_name = $1", room_name)
+            .fetch_optional(&pool)
+            .await?;
+
+    log!("fn: join_room() - does room exists: {:?}", does_room_exists);
+
+    match does_room_exists {
+        Some(room) => {
+            log!("fn: join_room() - room found");
+            log!("fn: join_room() - redirecting to /room/{}", room.id);
+            leptos_axum::redirect(cx, &format!("/room/{}", room.id));
+            Ok(())
+        }
+        None => {
+            log!("fn: join_room() - room don't exists");
+            Err(ServerFnError::ServerError(
+                "Room don't exists".to_string(),
+            ))
+        }
+    }
+}
 
 #[component]
 pub fn JoinRoomPage(cx: Scope) -> impl IntoView {
-    let (room_id, set_room_id) = create_signal(cx, "".to_string());
-    let room_id_input: NodeRef<Input> = create_node_ref(cx);
+    let join_room = create_server_action::<JoinRoom>(cx);
+    let (room_name, set_room_name) = create_signal(cx, String::new());
 
-    let on_submit = move |ev: SubmitEvent| {
-        ev.prevent_default();
-        let value = room_id_input().expect("<room id> to exist").value();
-        set_room_id(value);
+    let value = join_room.value();
+    let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
+
+    let input_params = InputParams {
+        label: "Room Name".to_string(),
+        placeholder: "Enter the room name".to_string(),
+        name: "room_name".to_string(),
+        input_type: InputType::Text,
+        value: (room_name, set_room_name),
     };
 
-    view! { cx,
+    let get_notification_params = move || {
+        let server_message = value().unwrap().unwrap_err().to_string();
+        let client_message = server_message.replace("error running server function: ", "");
+
+        NotificationParams {
+            message: client_message,
+            notification_type: NotificationType::Error,
+        }
+    };
+
+    view! {cx,
         <div class="flex h-screen justify-center items-center">
-            <form on:submit=on_submit id="form">
+            <ActionForm action=join_room class="space-y-3 w-80">
 
-                <div class="grid grid-cols-3 grid-row-2 gap-y-8  w-80">
+                <InputComponent params=input_params/>
 
-                    <div class="col-span-3">
-                        <label class="block text-white text-sm font-bold mb-2" for="room_id">
-                            Enter the Room Id
-                        </label>
-                        <input
-                            id="room_id"
-                            type="text"
-                            placeholder="Room Id"
-                            value=room_id
-                            node_ref=room_id_input
-                        />
+                <div class="grid grid-cols-3">
+                    <div class="col-span-1">
+                        <A href="/">
+                            <button class="btn btn-ghost btn-lg">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="3"
+                                    stroke="currentColor"
+                                    class="w-6 h-6"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                                    ></path>
+                                </svg>
+                            </button>
+                        </A>
                     </div>
 
-                    <A href="/">
-                        <button class="btn-warn btn-lg col-span-1">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="3"
-                                stroke="currentColor"
-                                class="w-6 h-6"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-                                ></path>
-                            </svg>
+                    <div class="col-span-2">
+                        <button class="btn btn-primary btn-lg w-full" type="submit">
+                            <b>JOIN</b>
                         </button>
-                    </A>
-
-                    <button class="btn-primary btn-lg col-span-2" type="submit" form="form">
-                        <b>JOIN</b>
-                    </button>
-
+                    </div>
                 </div>
-            </form>
+
+            </ActionForm>
+
+            <Show when=has_error fallback=|_| ()>
+                <NotificationComponent params=get_notification_params()/>
+            </Show>
+
         </div>
     }
 }

@@ -71,10 +71,8 @@ pub fn InputWithControlsComponent<T: Fn() -> Option<String> + 'static + Clone + 
             <label class="label-text font-bold mb-2">{params.label}</label>
             <input
                 class="input input-bordered input-primary w-full"
-                class=(
-                    "input-error",
-                    move || value_touched() && (params.value_error)().is_some(),
-                )
+                class=("input-error", move || value_touched() && (params.value_error)().is_some())
+
                 type=params.input_type.as_str()
                 placeholder=params.placeholder
                 name=params.name

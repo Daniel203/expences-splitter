@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use leptos::*;
 
 #[derive(Copy, Clone)]
@@ -30,7 +28,6 @@ impl NotificationType {
     }
 }
 
-
 #[derive(Clone)]
 pub struct NotificationParams {
     pub message: String,
@@ -49,30 +46,52 @@ impl Default for NotificationParams {
 pub fn NotificationComponent(cx: Scope, params: NotificationParams) -> impl IntoView {
     let (is_visible, set_is_visible) = create_signal(cx, true);
     let message = params.message.clone();
-    let notification_css_class = "alert w-96 whitespace-normal ".to_owned() + params.notification_type.css_class();
 
-    view! {cx,
-        { move || if is_visible() {
-            view!{cx,<div class="toast">
-                <div  class={notification_css_class.clone()} >
-                    <div>
-                        <div class="mb-2 flex justify-between">
-                            <span class="font-bold text-xl">{params.notification_type.title()}</span>
-                            <button
-                                class="close-button"
-                                on:click=move |_| set_is_visible(false)
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+    let notification_css_class =
+        "alert w-96 whitespace-normal ".to_owned() + params.notification_type.css_class();
+
+    view! { cx,
+        {move || {
+            if is_visible() {
+                view! { cx,
+                    <div class="toast">
+                        <div class=notification_css_class.clone()>
+                            <div class="w-80 self-center">
+                                <div class="mb-2 flex justify-between">
+                                    <span class="font-bold text-xl">
+                                        {params.notification_type.title()}
+                                    </span>
+                                    <button
+                                        class="close-button"
+                                        on:click=move |_| set_is_visible(false)
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke-width="1.5"
+                                            stroke="currentColor"
+                                            class="w-6 h-6"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M6 18L18 6M6 6l12 12"
+                                            ></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="w-80">
+                                    <span class="withespace-normal">{message.clone()}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div><span class="withespace-normal">{message.clone()}</span></div>
                     </div>
-                </div>
-            </div>}.into_view(cx)
-        } else {
-            view! {cx, <div></div>}.into_view(cx)
+                }
+                    .into_view(cx)
+            } else {
+                view! { cx, <div></div> }.into_view(cx)
+            }
         }}
     }
 }

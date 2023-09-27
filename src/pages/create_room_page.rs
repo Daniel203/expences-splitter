@@ -120,7 +120,7 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
             </ActionForm>
 
             <Show when=has_error fallback=|_| ()>
-                <NotificationComponent params=get_notification_params() />
+                <NotificationComponent params=get_notification_params()/>
             </Show>
 
         </div>
