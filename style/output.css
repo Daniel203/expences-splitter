@@ -1453,6 +1453,10 @@ html {
   height: 100vh;
 }
 
+.w-56 {
+  width: 14rem;
+}
+
 .w-6 {
   width: 1.5rem;
 }
@@ -1465,8 +1469,13 @@ html {
   width: 100%;
 }
 
-.max-w-md {
-  max-width: 28rem;
+.w-96 {
+  width: 24rem;
+}
+
+.min-w-max {
+  min-width: -moz-max-content;
+  min-width: max-content;
 }
 
 .grid-cols-3 {

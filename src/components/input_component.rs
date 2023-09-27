@@ -17,23 +17,23 @@ impl InputType {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct InputParams {
-    pub label: &'static str,
-    pub placeholder: &'static str,
-    pub name: &'static str,
+    pub label: String,
+    pub placeholder: String,
+    pub name: String,
     pub input_type: InputType,
     pub value: (ReadSignal<String>, WriteSignal<String>),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct InputWithControlsParams<T>
 where
     T: Fn() -> Option<String>,
 {
-    pub label: &'static str,
-    pub placeholder: &'static str,
-    pub name: &'static str,
+    pub label: String,
+    pub placeholder: String,
+    pub name: String,
     pub input_type: InputType,
     pub value: (ReadSignal<String>, WriteSignal<String>),
     pub value_error: T,

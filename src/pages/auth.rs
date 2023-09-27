@@ -51,7 +51,7 @@ pub async fn login(cx: Scope, username: String, password: String) -> Result<(), 
     let pool = pool(cx)?;
     let auth = auth(cx)?;
 
-    let mut user = User::get_user_from_username(username, &pool)
+    let user = User::get_user_from_username(username, &pool)
         .await
         .ok_or_else(|| {
             log::info!("fn: login() - user does not exist");
@@ -129,17 +129,17 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
     };
 
     let username_params = InputParams {
-        label: "Username",
-        placeholder: "username",
-        name: "username",
+        label: "Username".to_string(),
+        placeholder: "username".to_string(),
+        name: "username".to_string(),
         input_type: InputType::Text,
         value: (username, set_username),
     };
 
     let password_params = InputParams {
-        label: "Password",
-        placeholder: "******",
-        name: "password",
+        label: "Password".to_string(),
+        placeholder: "******".to_string(),
+        name: "password".to_string(),
         input_type: InputType::Password,
         value: (password, set_password),
     };
@@ -229,27 +229,27 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
     };
 
     let username_params = InputWithControlsParams {
-        label: "Username",
-        placeholder: "Username",
-        name: "username",
+        label: "Username".to_string(),
+        placeholder: "Username".to_string(),
+        name: "username".to_string(),
         input_type: InputType::Text,
         value: (username, set_username),
         value_error: username_error,
     };
 
     let password_params = InputWithControlsParams {
-        label: "Password",
-        placeholder: "******",
-        name: "password",
+        label: "Password".to_string(),
+        placeholder: "******".to_string(),
+        name: "password".to_string(),
         input_type: InputType::Password,
         value: (password, set_password),
         value_error: password_error,
     };
 
     let confirm_password_params = InputWithControlsParams {
-        label: "Confirm password",
-        placeholder: "******",
-        name: "confirm_password",
+        label: "Confirm password".to_string(),
+        placeholder: "******".to_string(),
+        name: "confirm_password".to_string(),
         input_type: InputType::Password,
         value: (confirm_password, set_confirm_password),
         value_error: confirm_password_error,

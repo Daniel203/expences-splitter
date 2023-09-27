@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use leptos::*;
 
+#[derive(Copy, Clone)]
 pub enum NotificationType {
     Error,
     Success,
@@ -29,19 +30,31 @@ impl NotificationType {
     }
 }
 
+
+#[derive(Clone)]
 pub struct NotificationParams {
-    pub message: &'static str,
+    pub message: String,
     pub notification_type: NotificationType,
+}
+impl Default for NotificationParams {
+    fn default() -> Self {
+        Self {
+            message: "".to_string(),
+            notification_type: NotificationType::Info,
+        }
+    }
 }
 
 #[component]
 pub fn NotificationComponent(cx: Scope, params: NotificationParams) -> impl IntoView {
     let (is_visible, set_is_visible) = create_signal(cx, true);
+    let message = params.message.clone();
+    let notification_css_class = "alert w-96 whitespace-normal ".to_owned() + params.notification_type.css_class();
 
     view! {cx,
         { move || if is_visible() {
             view!{cx,<div class="toast">
-                <div class="alert max-w-md whitespace-normal" class={params.notification_type.css_class()}>
+                <div  class={notification_css_class.clone()} >
                     <div>
                         <div class="mb-2 flex justify-between">
                             <span class="font-bold text-xl">{params.notification_type.title()}</span>
@@ -54,7 +67,7 @@ pub fn NotificationComponent(cx: Scope, params: NotificationParams) -> impl Into
                                 </svg>
                             </button>
                         </div>
-                        <div><span class="withespace-normal">{params.message}</span></div>
+                        <div><span class="withespace-normal">{message.clone()}</span></div>
                     </div>
                 </div>
             </div>}.into_view(cx)
