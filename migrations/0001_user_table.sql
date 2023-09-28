@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS user;
+
+CREATE TABLE IF NOT EXISTS user (
+    id INTEGER PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO user (id, username, password) VALUES (1, 'admin', '$2b$12$FUlK69p12lCkHkZA83H/O.FhGRGNAMWjgcb9DkPArN/GBwh1k.cvS');

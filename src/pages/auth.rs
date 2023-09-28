@@ -3,9 +3,9 @@ use leptos::*;
 use leptos_router::*;
 
 use crate::{
-    components::input_component::{
+    components::{input_component::{
         InputComponent, InputParams, InputType, InputWithControlsComponent, InputWithControlsParams,
-    },
+    }, notification_component::{NotificationParams, NotificationType, NotificationComponent}},
     models::user::User,
 };
 
@@ -96,7 +96,7 @@ pub async fn register(
     let hashed_password = hash(password, DEFAULT_COST).unwrap();
 
     log::info!("fn: register() - creating user on the database");
-    sqlx::query("INSERT INTO users (username, password) VALUES (?, ?)")
+    sqlx::query("INSERT INTO user (username, password) VALUES (?, ?)")
         .bind(&username)
         .bind(&hashed_password)
         .execute(&pool)
@@ -121,6 +121,9 @@ pub async fn register(
 pub fn LoginPage(cx: Scope) -> impl IntoView {
     let action = create_server_action::<Login>(cx);
 
+    let value = action.value();
+    let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
+
     let (username, set_username) = create_signal(cx, String::new());
     let (password, set_password) = create_signal(cx, String::new());
 
@@ -142,6 +145,16 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
         name: "password".to_string(),
         input_type: InputType::Password,
         value: (password, set_password),
+    };
+
+    let get_notification_params = move || {
+        let server_message = value().unwrap().unwrap_err().to_string();
+        let client_message = server_message.replace("error running server function: ", "");
+
+        NotificationParams {
+            message: client_message,
+            notification_type: NotificationType::Error,
+        }
     };
 
     view! { cx,
@@ -171,6 +184,11 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
                 </div>
 
             </ActionForm>
+
+            <Show when=has_error fallback=|_| ()>
+                <NotificationComponent params=get_notification_params()/>
+            </Show>
+
         </div>
     }
 }

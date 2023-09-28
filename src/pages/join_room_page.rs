@@ -14,7 +14,7 @@ pub async fn join_room(cx: leptos::Scope, room_name: String) -> Result<(), Serve
     let pool = pool(cx)?;
 
     let does_room_exists =
-        sqlx::query_as!(Room, "SELECT * FROM rooms WHERE room_name = $1", room_name)
+        sqlx::query_as!(Room, "SELECT * FROM room WHERE room_name = $1", room_name)
             .fetch_optional(&pool)
             .await?;
 

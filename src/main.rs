@@ -57,12 +57,12 @@ cfg_if! {
                 .await
                 .expect("Could not make pool.");
 
-            // log::info!("fn: main - running migrations...");
-            // sqlx::migrate!()
-            //     .run(&pool)
-            //     .await
-            //     .expect("could not run SQLx migrations");
-            // log::info!("fn: main - migrations done");
+            log::info!("fn: main - running migrations...");
+            sqlx::migrate!()
+                .run(&pool)
+                .await
+                .expect("could not run SQLx migrations");
+            log::info!("fn: main - migrations done");
 
             // Auth section
             let session_config = SessionConfig::default().with_table_name("axum_sessions");

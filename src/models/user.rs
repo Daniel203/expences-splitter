@@ -44,7 +44,7 @@ cfg_if! {
             pub async fn get(id: i64, pool: &SqlitePool) -> Option<Self> {
                 log::info!("fn: get()");
 
-                let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = ?")
+                let user = sqlx::query_as::<_, User>("SELECT * FROM user WHERE id = ?")
                     .bind(id)
                     .fetch_one(pool)
                     .await;
@@ -56,7 +56,7 @@ cfg_if! {
             pub async fn get_user_from_username(username: String, pool: &SqlitePool) -> Option<Self> {
                 log::info!("fn: get_user_from_username()");
 
-                let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = ?")
+                let user = sqlx::query_as::<_, User>("SELECT * FROM user WHERE username = ?")
                     .bind(username.trim())
                     .fetch_one(pool)
                     .await;

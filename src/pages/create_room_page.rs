@@ -9,11 +9,16 @@ use leptos_router::*;
 pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), ServerFnError> {
     use crate::models::room::Room;
     use crate::state::pool;
+    use crate::state::auth;
 
     let pool = pool(cx)?;
+    let auth = auth(cx)?;
+
+    let user = auth.current_user.unwrap();
+    let user_id = user.id;
 
     let does_room_exists =
-        sqlx::query_as!(Room, "SELECT * FROM rooms WHERE room_name = $1", room_name)
+        sqlx::query_as!(Room, "SELECT * FROM room WHERE room_name = $1", room_name)
             .fetch_optional(&pool)
             .await?;
 
@@ -34,8 +39,9 @@ pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), Ser
     // insert the room and return the new id
     let res = sqlx::query_as!(
         Room,
-        "INSERT INTO rooms (room_name, max_participants, owner) VALUES ($1, 20, 3) RETURNING *",
-        room_name
+        "INSERT INTO room (room_name, max_participants, owner) VALUES ($1, 20, $2) RETURNING *",
+        room_name,
+        user_id
     )
     .fetch_one(&pool)
     .await;
