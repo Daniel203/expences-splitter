@@ -1,5 +1,6 @@
 use leptos::*;
 use leptos_router::*;
+use crate::components::expenses_component::ExpensesComponent;
 
 #[derive(Params, PartialEq, Eq, Clone)]
 struct DashboardPageParams {
@@ -17,8 +18,18 @@ pub fn DashboardPage(cx: Scope) -> impl IntoView {
     };
 
     view! { cx,
-        <div class="flex h-screen justify-center items-center">
-            <p>{id}</p>
+        <div class="flex flex-col h-screen justify-center items-center">
+          <p class="text-2xl font-bold mb-4">{id}</p>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <ExpensesComponent />
+                </div>
+
+                <div>
+                    <ExpensesComponent />
+                </div>
+            </div>
         </div>
     }
 }

@@ -13,12 +13,12 @@ cfg_if! {
         use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns_with_context};
         use leptos::{log, view, provide_context, get_configuration};
         use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
-        use expences_splitter::state::AppState;
-        use expences_splitter::models::user::User;
-        use expences_splitter::app::App;
+        use expenses_splitter::state::AppState;
+        use expenses_splitter::models::user::User;
+        use expenses_splitter::app::App;
         use axum_session::{SessionConfig, SessionLayer, SessionStore};
         use axum_session_auth::{AuthSessionLayer, AuthConfig, SessionSqlitePool};
-        use expences_splitter::pages::auth::AuthSession;
+        use expenses_splitter::pages::auth::AuthSession;
 
         async fn server_fn_handler(State(app_state): State<AppState>, auth_session: AuthSession,path: Path<String>, headers: HeaderMap, raw_query: RawQuery,
             request: Request<AxumBody>) -> impl IntoResponse {
@@ -42,8 +42,8 @@ cfg_if! {
 
         #[tokio::main]
         async fn main() {
-            use expences_splitter::app::*;
-            use expences_splitter::fileserv::file_and_error_handler;
+            use expenses_splitter::app::*;
+            use expenses_splitter::fileserv::file_and_error_handler;
 
             simple_logger::init_with_level(log::Level::Info).expect("couldn't initialize logging");
 
@@ -53,7 +53,7 @@ cfg_if! {
             let routes = generate_route_list(|cx| view! { cx, <App/> }).await;
 
             let pool = SqlitePoolOptions::new()
-                .connect("sqlite:expences.db")
+                .connect("sqlite:expenses.db")
                 .await
                 .expect("Could not make pool.");
 

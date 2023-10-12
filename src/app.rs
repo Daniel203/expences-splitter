@@ -21,10 +21,10 @@ pub fn App(cx: Scope) -> impl IntoView {
     view! { cx,
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
-        <Stylesheet id="leptos" href="/pkg/expences-splitter.css"/>
+        <Stylesheet id="leptos" href="/pkg/expenses-splitter.css"/>
 
         // sets the document title
-        <Title text="Expences Splitter"/>
+        <Title text="Expenses Splitter"/>
 
         // content for this welcome page
         <Router fallback=|cx| {
