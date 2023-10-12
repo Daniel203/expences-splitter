@@ -17,6 +17,10 @@ pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), Ser
     let user = auth.current_user.unwrap();
     let user_id = user.id;
 
+    log!(
+        "fn: create_room() - checking if does room exists",
+    );
+
     let does_room_exists =
         sqlx::query_as!(Room, "SELECT * FROM room WHERE room_name = $1", room_name)
             .fetch_optional(&pool)
@@ -36,10 +40,14 @@ pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), Ser
 
     log!("fn: create_room() - creating room: {:?}", room_name);
 
-    // insert the room and return the new id
+    let random_uuid = uuid::Uuid::new_v4().to_string();
+    log!("fn: create_room() - generated a random uuid: {}", random_uuid);
+
+    // insert the room 
     let res = sqlx::query_as!(
         Room,
-        "INSERT INTO room (room_name, max_participants, owner) VALUES ($1, 20, $2) RETURNING *",
+        "INSERT INTO room (id, room_name, max_participants, owner) VALUES ($1, $2, 20, $3) RETURNING *",
+        random_uuid,
         room_name,
         user_id
     )

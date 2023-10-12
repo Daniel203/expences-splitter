@@ -9,7 +9,7 @@ pub struct Expense {
     pub title: String,
     pub description: String,
     pub paid_by: i64,
-    pub room_id: i64,
+    pub room_id: String,
 
     #[cfg(feature = "ssr")]
     pub created_at: Option<sqlx::types::chrono::NaiveDateTime>,
