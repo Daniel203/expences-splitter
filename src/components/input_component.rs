@@ -40,8 +40,8 @@ where
 }
 
 #[component]
-pub fn InputComponent( cx: Scope, params: InputParams,) -> impl IntoView {
-    view! { cx,
+pub fn InputComponent(params: InputParams,) -> impl IntoView {
+    view! {
         <div class="form-control w-full">
             <label class="label-text font-bold mb-2">{params.label}</label>
             <input
@@ -61,12 +61,11 @@ pub fn InputComponent( cx: Scope, params: InputParams,) -> impl IntoView {
 
 #[component]
 pub fn InputWithControlsComponent<T: Fn() -> Option<String> + 'static + Clone + Copy>(
-    cx: Scope,
     params: InputWithControlsParams<T>,
 ) -> impl IntoView {
-    let (value_touched, set_value_touched) = create_signal(cx, false);
+    let (value_touched, set_value_touched) = create_signal(false);
 
-    view! { cx,
+    view! {
         <div class="form-control w-full">
             <label class="label-text font-bold mb-2">{params.label}</label>
             <input
@@ -83,14 +82,13 @@ pub fn InputWithControlsComponent<T: Fn() -> Option<String> + 'static + Clone + 
             <label>
                 {move || {
                     if value_touched() && (params.value_error)().is_some() {
-                        view! { cx,
+                        view! {
                             <span class="label-text-alt text-error">
                                 {move || params.value_error}
                             </span>
                         }
                     } else {
-
-                        view! { cx,
+                        view! {
                             <span class="label-text-alt text-transparent">Username error</span>
                         }
                     }

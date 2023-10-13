@@ -6,13 +6,14 @@ use leptos::*;
 use leptos_router::*;
 
 #[server(CreateRoom, "/api")]
-pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), ServerFnError> {
+pub async fn create_room(room_name: String) -> Result<(), ServerFnError> {
+    use leptos::logging::log;
     use crate::models::room::Room;
     use crate::state::pool;
     use crate::state::auth;
 
-    let pool = pool(cx)?;
-    let auth = auth(cx)?;
+    let pool = pool()?;
+    let auth = auth()?;
 
     let user = auth.current_user.unwrap();
     let user_id = user.id;
@@ -58,7 +59,7 @@ pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), Ser
         Ok(room) => {
             log::info!("fn: create_room() - created room: {:?}", room);
             let id = room.id;
-            leptos_axum::redirect(cx, &format!("/room/{}", id));
+            leptos_axum::redirect(&format!("/room/{}", id));
             Ok(())
         }
         Err(e) => {
@@ -71,9 +72,9 @@ pub async fn create_room(cx: leptos::Scope, room_name: String) -> Result<(), Ser
 }
 
 #[component]
-pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
-    let create_room = create_server_action::<CreateRoom>(cx);
-    let (room_name, set_room_name) = create_signal(cx, String::new());
+pub fn CreateRoomPage() -> impl IntoView {
+    let create_room = create_server_action::<CreateRoom>();
+    let (room_name, set_room_name) = create_signal(String::new());
 
     let value = create_room.value();
     let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
@@ -96,7 +97,7 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
         }
     };
 
-    view! { cx,
+    view! {
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=create_room class="space-y-3 w-80">
 
@@ -133,7 +134,7 @@ pub fn CreateRoomPage(cx: Scope) -> impl IntoView {
 
             </ActionForm>
 
-            <Show when=has_error fallback=|_| ()>
+            <Show when=has_error fallback=|| ()>
                 <NotificationComponent params=get_notification_params()/>
             </Show>
 

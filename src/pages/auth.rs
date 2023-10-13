@@ -12,7 +12,7 @@ use crate::{
 cfg_if! {
 if #[cfg(feature = "ssr")] {
     use sqlx::SqlitePool;
-    use axum_session_auth::{SessionSqlitePool, Authentication, HasPermission};
+    use axum_session_auth::{SessionSqlitePool};
     use bcrypt::{verify, hash, DEFAULT_COST};
     use crate::state::{auth, pool};
 
@@ -20,9 +20,9 @@ if #[cfg(feature = "ssr")] {
 }}
 
 #[server(GetUser, "/api")]
-pub async fn get_user(cx: Scope) -> Result<Option<User>, ServerFnError> {
+pub async fn get_user() -> Result<Option<User>, ServerFnError> {
     log::info!("fn: get_user()");
-    let auth = auth(cx)?;
+    let auth = auth()?;
 
     let user = auth.current_user;
     log::info!("fn: get_user() - user: {:?}", user);
@@ -31,25 +31,25 @@ pub async fn get_user(cx: Scope) -> Result<Option<User>, ServerFnError> {
 }
 
 #[server(Logout, "/api")]
-pub async fn logout(cx: Scope) -> Result<(), ServerFnError> {
+pub async fn logout() -> Result<(), ServerFnError> {
     log::info!("fn: logout()");
-    let auth = auth(cx)?;
+    let auth = auth()?;
 
     log::info!("fn: logout() - logging out user");
     auth.logout_user();
 
     log::info!("fn: logout() - redirecting to \"/\"");
-    leptos_axum::redirect(cx, "/");
+    leptos_axum::redirect("/");
 
     return Ok(());
 }
 
 #[server(Login, "/api")]
-pub async fn login(cx: Scope, username: String, password: String) -> Result<(), ServerFnError> {
+pub async fn login(username: String, password: String) -> Result<(), ServerFnError> {
     log::info!("fn: login()");
 
-    let pool = pool(cx)?;
-    let auth = auth(cx)?;
+    let pool = pool()?;
+    let auth = auth()?;
 
     let user = User::get_user_from_username(username, &pool)
         .await
@@ -64,7 +64,7 @@ pub async fn login(cx: Scope, username: String, password: String) -> Result<(), 
         auth.login_user(user.id);
 
         log::info!("fn: login() - redirecting to \"/\"");
-        leptos_axum::redirect(cx, "/");
+        leptos_axum::redirect("/");
         return Ok(());
     } else {
         log::info!("fn: login() - password is incorrect");
@@ -76,15 +76,14 @@ pub async fn login(cx: Scope, username: String, password: String) -> Result<(), 
 
 #[server(Register, "/api")]
 pub async fn register(
-    cx: Scope,
     username: String,
     password: String,
     confirm_password: String,
 ) -> Result<(), ServerFnError> {
     log::info!("fn: register()");
 
-    let pool = pool(cx)?;
-    let auth = auth(cx)?;
+    let pool = pool()?;
+    let auth = auth()?;
 
     if password != confirm_password {
         log::info!("fn: register() - passwords do not match");
@@ -112,20 +111,20 @@ pub async fn register(
     auth.login_user(user.id);
 
     log::info!("fn: register() - redirecting to \"/\"");
-    leptos_axum::redirect(cx, "/");
+    leptos_axum::redirect("/");
 
     return Ok(());
 }
 
 #[component]
-pub fn LoginPage(cx: Scope) -> impl IntoView {
-    let action = create_server_action::<Login>(cx);
+pub fn LoginPage() -> impl IntoView {
+    let action = create_server_action::<Login>();
 
     let value = action.value();
     let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
 
-    let (username, set_username) = create_signal(cx, String::new());
-    let (password, set_password) = create_signal(cx, String::new());
+    let (username, set_username) = create_signal(String::new());
+    let (password, set_password) = create_signal(String::new());
 
     let is_form_valid = move || {
         !username.with(String::is_empty) && !password.with(String::is_empty)
@@ -157,7 +156,7 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
         }
     };
 
-    view! { cx,
+    view! {
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=action class="space-y-3 w-80">
                 <p class="text-3xl font-bold mb-6">"Log In"</p>
@@ -185,7 +184,7 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
 
             </ActionForm>
 
-            <Show when=has_error fallback=|_| ()>
+            <Show when=has_error fallback=|| ()>
                 <NotificationComponent params=get_notification_params()/>
             </Show>
 
@@ -194,12 +193,12 @@ pub fn LoginPage(cx: Scope) -> impl IntoView {
 }
 
 #[component]
-pub fn RegisterPage(cx: Scope) -> impl IntoView {
-    let action = create_server_action::<Register>(cx);
+pub fn RegisterPage() -> impl IntoView {
+    let action = create_server_action::<Register>();
 
-    let (username, set_username) = create_signal(cx, String::new());
-    let (password, set_password) = create_signal(cx, String::new());
-    let (confirm_password, set_confirm_password) = create_signal(cx, String::new());
+    let (username, set_username) = create_signal(String::new());
+    let (password, set_password) = create_signal(String::new());
+    let (confirm_password, set_confirm_password) = create_signal(String::new());
 
     const USERNAME_MIN_LENGTH: usize = 5;
     const PASSWORD_MIN_LENGTH: usize = 8;
@@ -273,7 +272,7 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
         value_error: confirm_password_error,
     };
 
-    view! { cx,
+    view! {
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=action class="space-y-3 w-80">
                 <p class="text-3xl font-bold mb-6">"Register"</p>
@@ -306,9 +305,9 @@ pub fn RegisterPage(cx: Scope) -> impl IntoView {
 }
 
 #[component]
-pub fn LogoutPage(cx: Scope) -> impl IntoView {
-    let action = create_server_action::<Logout>(cx);
+pub fn LogoutPage() -> impl IntoView {
+    let action = create_server_action::<Logout>();
     action.dispatch(Logout {});
 
-    view! { cx, <div></div> }
+    view! { <div></div> }
 }

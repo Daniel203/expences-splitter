@@ -2,8 +2,8 @@ use leptos::*;
 use leptos_router::*;
 
 #[component]
-pub fn HomePage(cx: Scope) -> impl IntoView {
-    view! { cx,
+pub fn HomePage() -> impl IntoView {
+    view! {
         <div class="flex h-screen justify-center items-center">
             <div class="flex flex-col space-y-6 w-80">
                 <A href="join">

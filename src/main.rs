@@ -11,7 +11,7 @@ cfg_if! {
             Router,
         };
         use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns_with_context};
-        use leptos::{log, view, provide_context, get_configuration};
+        use leptos::{logging::log, view, provide_context, get_configuration, IntoView};
         use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
         use expenses_splitter::state::AppState;
         use expenses_splitter::models::user::User;
@@ -23,19 +23,19 @@ cfg_if! {
         async fn server_fn_handler(State(app_state): State<AppState>, auth_session: AuthSession,path: Path<String>, headers: HeaderMap, raw_query: RawQuery,
             request: Request<AxumBody>) -> impl IntoResponse {
 
-            handle_server_fns_with_context(path, headers, raw_query, move |cx| {
-                provide_context(cx, auth_session.clone());
-                provide_context(cx, app_state.pool.clone());
+            handle_server_fns_with_context(path, headers, raw_query, move || {
+                provide_context(auth_session.clone());
+                provide_context(app_state.pool.clone());
             }, request).await
         }
 
         async fn leptos_routes_handler(auth_session: AuthSession,State(app_state): State<AppState>, req: Request<AxumBody>) -> Response{
             let handler = leptos_axum::render_app_to_stream_with_context(app_state.leptos_options.clone(),
-                move |cx| {
-                    provide_context(cx, auth_session.clone());
-                    provide_context(cx, app_state.pool.clone());
+                move || {
+                    provide_context(auth_session.clone());
+                    provide_context(app_state.pool.clone());
                 },
-                |cx| view! { cx, <App/> }
+                || view! {<App/> }
             );
             handler(req).await.into_response()
         }
@@ -50,7 +50,7 @@ cfg_if! {
             let conf = get_configuration(None).await.unwrap();
             let leptos_options = conf.leptos_options;
             let addr = leptos_options.site_addr;
-            let routes = generate_route_list(|cx| view! { cx, <App/> }).await;
+            let routes = generate_route_list(|| view! { <App/> });
 
             let pool = SqlitePoolOptions::new()
                 .connect("sqlite:expenses.db")

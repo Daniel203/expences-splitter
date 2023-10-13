@@ -14,34 +14,32 @@ use crate::{
 };
 
 #[component]
-pub fn App(cx: Scope) -> impl IntoView {
+pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
-    provide_meta_context(cx);
+    provide_meta_context();
 
-    view! { cx,
-        // injects a stylesheet into the document <head>
-        // id=leptos means cargo-leptos will hot-reload this stylesheet
+    view! {
         <Stylesheet id="leptos" href="/pkg/expenses-splitter.css"/>
 
         // sets the document title
         <Title text="Expenses Splitter"/>
 
         // content for this welcome page
-        <Router fallback=|cx| {
+        <Router fallback=|| {
             let mut outside_errors = Errors::default();
             outside_errors.insert_with_default_key(AppError::NotFound);
-            view! { cx, <ErrorTemplate outside_errors/> }.into_view(cx)
+            view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
             <main class="h-screen">
                 <Routes>
-                    <Route path="register" view=|cx| view! { cx, <RegisterPage/> }/>
-                    <Route path="login" view=|cx| view! { cx, <LoginPage/> }/>
-                    <Route path="" view=|cx| view! { cx, <Page/> }>
-                        <Route path="" view=|cx| view! { cx, <HomePage/> }/>
-                        <Route path="new" view=|cx| view! { cx, <CreateRoomPage/> }/>
-                        <Route path="join" view=|cx| view! { cx, <JoinRoomPage/> }/>
-                        <Route path="room/:id" view=|cx| view! { cx, <DashboardPage/> }/>
-                        <Route path="logout" view=|cx| view! { cx, <LogoutPage/> }/>
+                    <Route path="register" view=|| view! { <RegisterPage/> }/>
+                    <Route path="login" view=|| view! { <LoginPage/> }/>
+                    <Route path="" view=|| view! { <Page/> }>
+                        <Route path="" view=|| view! { <HomePage/> }/>
+                        <Route path="new" view=|| view! { <CreateRoomPage/> }/>
+                        <Route path="join" view=|| view! { <JoinRoomPage/> }/>
+                        <Route path="room/:id" view=|| view! { <DashboardPage/> }/>
+                        <Route path="logout" view=|| view! { <LogoutPage/> }/>
                     </Route>
                 </Routes>
             </main>
@@ -50,14 +48,13 @@ pub fn App(cx: Scope) -> impl IntoView {
 }
 
 #[component]
-pub fn Page(cx: Scope) -> impl IntoView {
-    let login = create_server_action::<Login>(cx);
-    let register = create_server_action::<Register>(cx);
-    let logout = create_server_action::<Logout>(cx);
+pub fn Page() -> impl IntoView {
+    let login = create_server_action::<Login>();
+    let register = create_server_action::<Register>();
+    let logout = create_server_action::<Logout>();
 
     // get the user every time that the "login" or "register" server functions are called
     let user = create_resource(
-        cx,
         move || {
             (
                 login.version().get(),
@@ -66,19 +63,19 @@ pub fn Page(cx: Scope) -> impl IntoView {
             )
         },
         move |_| {
-            get_user(cx)
+            get_user()
         },
     );
 
-    view! { cx,
+    view! {
         <Transition fallback=move || {
-            view! { cx, <p>"Loading..."</p> }
+            view! { <p>"Loading..."</p> }
         }>
             {move || {
-                if let Some(Ok(Some(_))) = user.read(cx) {
-                    view! { cx, <Outlet/> }.into_view(cx)
+                if let Some(Ok(Some(_))) = user.get() {
+                    view! { <Outlet/> }.into_view()
                 } else {
-                    view! { cx, <UserNotAuthenticated/> }.into_view(cx)
+                    view! { <UserNotAuthenticated/> }.into_view()
                 }
             }}
 
@@ -87,8 +84,8 @@ pub fn Page(cx: Scope) -> impl IntoView {
 }
 
 #[component]
-pub fn UserNotAuthenticated(cx: Scope) -> impl IntoView {
-    view! { cx,
+pub fn UserNotAuthenticated() -> impl IntoView {
+    view! {
         <div class="flex h-screen justify-center items-center">
             <div>
                 <p class="font-bold text-3xl mb-6">"You are not logged in"</p>

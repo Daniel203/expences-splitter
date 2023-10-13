@@ -43,17 +43,17 @@ impl Default for NotificationParams {
 }
 
 #[component]
-pub fn NotificationComponent(cx: Scope, params: NotificationParams) -> impl IntoView {
-    let (is_visible, set_is_visible) = create_signal(cx, true);
+pub fn NotificationComponent(params: NotificationParams) -> impl IntoView {
+    let (is_visible, set_is_visible) = create_signal(true);
     let message = params.message.clone();
 
     let notification_css_class =
         "alert w-96 whitespace-normal ".to_owned() + params.notification_type.css_class();
 
-    view! { cx,
+    view! {
         {move || {
             if is_visible() {
-                view! { cx,
+                view! {
                     <div class="toast">
                         <div class=notification_css_class.clone()>
                             <div class="w-80 self-center">
@@ -88,9 +88,9 @@ pub fn NotificationComponent(cx: Scope, params: NotificationParams) -> impl Into
                         </div>
                     </div>
                 }
-                    .into_view(cx)
+                    .into_view()
             } else {
-                view! { cx, <div></div> }.into_view(cx)
+                view! { <div></div> }.into_view()
             }
         }}
     }

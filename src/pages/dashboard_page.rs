@@ -8,8 +8,8 @@ struct DashboardPageParams {
 }
 
 #[component]
-pub fn DashboardPage(cx: Scope) -> impl IntoView {
-    let params = use_params::<DashboardPageParams>(cx);
+pub fn DashboardPage() -> impl IntoView {
+    let params = use_params::<DashboardPageParams>();
 
     let id = move || {
         params.with(|p| {
@@ -17,17 +17,17 @@ pub fn DashboardPage(cx: Scope) -> impl IntoView {
         })
     };
 
-    view! { cx,
+    view! {
         <div class="flex flex-col h-screen justify-center items-center">
-          <p class="text-2xl font-bold mb-4">{id}</p>
+            <p class="text-2xl font-bold mb-4">{id}</p>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <ExpensesComponent />
+                    <ExpensesComponent/>
                 </div>
 
                 <div>
-                    <ExpensesComponent />
+                    <ExpensesComponent/>
                 </div>
             </div>
         </div>

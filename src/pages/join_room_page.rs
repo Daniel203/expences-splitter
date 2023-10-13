@@ -7,11 +7,12 @@ use crate::components::{
 };
 
 #[server(JoinRoom, "/api")]
-pub async fn join_room(cx: leptos::Scope, room_name: String) -> Result<(), ServerFnError> {
+pub async fn join_room(room_name: String) -> Result<(), ServerFnError> {
+    use leptos::logging::log;
     use crate::models::room::Room;
     use crate::state::pool;
 
-    let pool = pool(cx)?;
+    let pool = pool()?;
 
     let does_room_exists =
         sqlx::query_as!(Room, "SELECT * FROM room WHERE room_name = $1", room_name)
@@ -24,7 +25,7 @@ pub async fn join_room(cx: leptos::Scope, room_name: String) -> Result<(), Serve
         Some(room) => {
             log!("fn: join_room() - room found");
             log!("fn: join_room() - redirecting to /room/{}", room.id);
-            leptos_axum::redirect(cx, &format!("/room/{}", room.id));
+            leptos_axum::redirect(&format!("/room/{}", room.id));
             Ok(())
         }
         None => {
@@ -37,9 +38,9 @@ pub async fn join_room(cx: leptos::Scope, room_name: String) -> Result<(), Serve
 }
 
 #[component]
-pub fn JoinRoomPage(cx: Scope) -> impl IntoView {
-    let join_room = create_server_action::<JoinRoom>(cx);
-    let (room_name, set_room_name) = create_signal(cx, String::new());
+pub fn JoinRoomPage() -> impl IntoView {
+    let join_room = create_server_action::<JoinRoom>();
+    let (room_name, set_room_name) = create_signal(String::new());
 
     let value = join_room.value();
     let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
@@ -62,7 +63,7 @@ pub fn JoinRoomPage(cx: Scope) -> impl IntoView {
         }
     };
 
-    view! {cx,
+    view! {
         <div class="flex h-screen justify-center items-center">
             <ActionForm action=join_room class="space-y-3 w-80">
 
@@ -99,7 +100,7 @@ pub fn JoinRoomPage(cx: Scope) -> impl IntoView {
 
             </ActionForm>
 
-            <Show when=has_error fallback=|_| ()>
+            <Show when=has_error fallback=|| ()>
                 <NotificationComponent params=get_notification_params()/>
             </Show>
 

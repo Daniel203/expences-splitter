@@ -2,7 +2,7 @@ use cfg_if::cfg_if;
 
 cfg_if! {
     if #[cfg(feature = "ssr")] {
-        use leptos::{LeptosOptions, ServerFnError, Scope, use_context};
+        use leptos::{LeptosOptions, ServerFnError, use_context};
         use sqlx::SqlitePool;
         use axum::extract::FromRef;
         use leptos_router::RouteListing;
@@ -16,13 +16,13 @@ cfg_if! {
 
         }
 
-        pub fn pool(cx: Scope) -> Result<SqlitePool, ServerFnError> {
-            use_context::<SqlitePool>(cx)
+        pub fn pool() -> Result<SqlitePool, ServerFnError> {
+            use_context::<SqlitePool>()
                 .ok_or_else(|| ServerFnError::ServerError("Pool missing.".into()))
         }
 
-        pub fn auth(cx: Scope) -> Result<AuthSession, ServerFnError> {
-            use_context::<AuthSession>(cx)
+        pub fn auth() -> Result<AuthSession, ServerFnError> {
+            use_context::<AuthSession>()
                 .ok_or_else(|| ServerFnError::ServerError("Auth session missing.".into()))
         }
 
