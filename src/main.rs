@@ -11,7 +11,7 @@ cfg_if! {
             Router,
         };
         use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns_with_context};
-        use leptos::{logging::log, view, provide_context, get_configuration, IntoView};
+        use leptos::{logging::log, view, provide_context, get_configuration};
         use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
         use expenses_splitter::state::AppState;
         use expenses_splitter::models::user::User;

@@ -8,6 +8,9 @@ pub struct User {
     pub id: i64,
     pub username: String,
     pub password: String,
+
+    #[cfg(feature = "ssr")]
+    pub created_at: Option<sqlx::types::chrono::NaiveDateTime>,
 }
 
 impl fmt::Debug for User {
@@ -31,6 +34,9 @@ impl Default for User {
             id: -1,
             username: "Guest".to_string(),
             password: "".to_string(),
+             
+            #[cfg(feature = "ssr")]
+            created_at: None,
         }
     }
 }
