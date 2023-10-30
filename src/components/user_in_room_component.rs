@@ -28,19 +28,19 @@ pub fn UserInRoomComponent(room_id: String) -> impl IntoView {
             Err(_) => view! {<p>"Error"</p>}.into_view(),
             Ok(users) => {
                 if users.is_empty() {
-                    view! {<tr><td>"No users"</td></tr>}.into_view()
-                } else {
-                    users
-                        .into_iter()
-                        .map(|user| {
-                            view! {
-                                <tr>
-                                    <td>{user.username}</td>
-                                </tr>
-                            }
-                        })
-                        .collect_view()
+                    return view! {<tr><td>"No users"</td></tr>}.into_view();
                 }
+
+                users
+                    .into_iter()
+                    .map(|user| {
+                        view! {
+                            <tr>
+                                <td>{user.username}</td>
+                            </tr>
+                        }
+                    })
+                    .collect_view()
             }
         })
     };
@@ -55,7 +55,7 @@ pub fn UserInRoomComponent(room_id: String) -> impl IntoView {
                         </tr>
                     </thead>
                     <tbody>
-                        {move || users_view() }
+                        {move || users_view()}
                     </tbody>
                 </table>
             </Transition>

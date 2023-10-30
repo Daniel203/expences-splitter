@@ -1,5 +1,5 @@
 use crate::components::{
-    expenses_component::ExpensesComponent, user_in_room_component::UserInRoomComponent,
+    expenses_component::ExpensesComponent, user_in_room_component::UserInRoomComponent, add_expense_component::AddExpenseComponent,
 };
 use leptos::*;
 use leptos_router::*;
@@ -46,14 +46,11 @@ pub fn DashboardPage() -> impl IntoView {
             </Transition>
 
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <ExpensesComponent/>
-                </div>
-
-                <div>
-                    <UserInRoomComponent room_id=id() />
-                </div>
+                <ExpensesComponent room_id=id() />
+                <UserInRoomComponent room_id=id() />
             </div>
+
+            <AddExpenseComponent room_id=id() />
         </div>
     }
 }
