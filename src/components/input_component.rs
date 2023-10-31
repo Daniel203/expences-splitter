@@ -40,7 +40,7 @@ where
 }
 
 #[component]
-pub fn InputComponent(params: InputParams,) -> impl IntoView {
+pub fn InputComponent(params: InputParams) -> impl IntoView {
     view! {
         <div class="form-control w-full">
             <label class="label-text font-bold mb-2">{params.label}</label>

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt, string};
 
 #[cfg_attr(feature = "ssr", derive(sqlx::FromRow))]
-#[derive(Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub struct User {
     pub id: i64,
     pub username: String,

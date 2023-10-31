@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExpenseDTO {
     pub id: Option<i64>,
-    pub amount: Option<i64>,
+    pub amount: Option<f64>,
     pub participants: Option<String>,
     pub title: Option<String>,
     pub description: Option<String>,
@@ -19,7 +19,7 @@ pub struct ExpenseDTO {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Expense {
     pub id: i64,
-    pub amount: i64,
+    pub amount: f64,
     pub participants: Vec<i64>,
     pub title: String,
     pub description: Option<String>,
