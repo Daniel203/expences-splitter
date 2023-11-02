@@ -1,91 +1,216 @@
-use std::collections::HashMap;
-
-use crate::{components::{user_in_room_component::get_users_in_room, input_component::{InputComponent, InputType, InputParams}}, models::user::User};
+use crate::{
+    components::{
+        input_component::{
+            InputComponent, InputParams, InputType, InputWithControlsComponent,
+            InputWithControlsParams,
+        },
+        notification_component::{NotificationComponent, NotificationParams, NotificationType},
+        user_in_room_component::get_users_in_room,
+    },
+    models::{expense::Expense, user::User},
+};
 use leptos::*;
+use leptos_router::{ActionForm, FromFormData};
+use std::{collections::HashMap, iter};
 
-type UsersSelection = HashMap<User, bool>;
+type SelectedUsers = HashMap<User, bool>;
 
-fn populate_users_selection(
-    set_users_selection: WriteSignal<UsersSelection>,
-    users: Vec<User>,
-) -> () {
-    let mut users_selection = UsersSelection::new();
-    for user in users {
-        users_selection.insert(user, false);
-    }
-    set_users_selection(users_selection);
+#[server(AddExpense, "/api")]
+pub async fn add_expense(expense: Expense) -> Result<(), ServerFnError> {
+    Ok(())
 }
 
 #[component]
 pub fn AddExpenseComponent(room_id: String) -> impl IntoView {
-    let users = create_resource(move || (), move |_| get_users_in_room(room_id.clone()));
+    let action = create_server_action::<AddExpense>();
 
-    let (payers_selection, set_payers_selection) = create_signal(UsersSelection::new());
-    let (participants_selection, set_participants_selection) = create_signal(UsersSelection::new());
+    let value = action.value();
+    let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
 
-    let (amount, set_amount) = create_signal("0.0".to_string());
+    let room_id_clone = room_id.clone();
+    let users = create_resource(move || (), move |_| get_users_in_room(room_id_clone));
 
-    let input_amount_params = InputParams {
+    let (who_payed, set_who_payed) = create_signal::<Option<User>>(None);
+    let (selected_participants, set_selected_participants) = create_signal(SelectedUsers::new());
+    let (amount, set_amount) = create_signal("".to_string());
+    let (title, set_title) = create_signal("".to_string());
+    let (description, set_description) = create_signal("".to_string());
+
+    let amount_error = move || {
+        if amount.with(String::is_empty) {
+            return Some("Amount is required".to_string());
+        } else if let Err(_) = amount.get().parse::<f64>() {
+            return Some("Amount must be a number".to_string());
+        } else {
+            return None;
+        }
+    };
+
+    let title_error = move || {
+        if title.with(String::is_empty) {
+            return Some("Title is required".to_string());
+        } else {
+            return None;
+        }
+    };
+
+    let input_title_params = InputWithControlsParams {
+        label: "Title".to_string(),
+        placeholder: "Title".to_string(),
+        name: "title".to_string(),
+        input_type: InputType::Text,
+        value: (title, set_title),
+        value_error: (title_error),
+    };
+
+    let input_description_params = InputParams {
+        label: "Description".to_string(),
+        placeholder: "Description".to_string(),
+        name: "description".to_string(),
+        input_type: InputType::Text,
+        value: (description, set_description),
+    };
+
+    let input_amount_params = InputWithControlsParams {
         label: "Amount".to_string(),
         placeholder: "0.00".to_string(),
         name: "amount".to_string(),
-        input_type: InputType::Number,
+        input_type: InputType::Text,
         value: (amount, set_amount),
+        value_error: amount_error,
     };
 
-    let users_selection_view = move |users_selection: ReadSignal<UsersSelection>, set_users_selection: WriteSignal<UsersSelection>| {
-        match users.get() {
-            Some(Ok(users)) => {
-                if users.is_empty() {
-                    return view! { <p>"No users"</p> }.into_view();
-                }
+    let get_notification_params = move || {
+        let server_message = value().unwrap().unwrap_err().to_string();
+        let client_message = server_message.replace("error running server function: ", "");
 
-                populate_users_selection(set_users_selection, users.clone());
-
-                users
-                    .into_iter()
-                    .map(|user| {
-                        let user_tmp = user.clone();
-
-                        view! {
-                            <div class="form-control">
-                                <label class="label cursor-pointer">
-                                    <span class="label-text">{user_tmp.username}</span>
-                                    <input
-                                        type="checkbox"
-                                        class="checkbox checkbox-primary"
-                                        on:click=move |_| {
-                                            let mut users_selection_tmp = users_selection.get();
-                                            let selected = users_selection_tmp.get(&user).unwrap();
-                                            users_selection_tmp.insert(user.clone(), !selected);
-                                            logging::log!("{:?}", users_selection_tmp.clone());
-                                            set_users_selection(users_selection_tmp);
-                                        }
-                                    />
-
-                                </label>
-                            </div>
-                        }
-                    })
-                    .collect_view()
-            }
-            _ => view! { <p>"Error"</p> }.into_view(),
+        NotificationParams {
+            message: client_message,
+            notification_type: NotificationType::Error,
         }
+    };
+
+    let is_form_valid =
+        move || title_error().is_none() && amount_error().is_none() && who_payed.get().is_some();
+
+    let add_expense_click = move |_| {
+        spawn_local(async {
+            let selected_users: Vec<i64> = selected_participants
+                .get()
+                .iter()
+                .filter_map(
+                    |(user, is_selected)| {
+                        if *is_selected {
+                            Some(user.id)
+                        } else {
+                            None
+                        }
+                    },
+                )
+                .collect();
+
+            let mut expense = Expense::default();
+            expense.room_id = room_id.clone();
+            expense.title = title.get();
+            expense.amount = amount.get().parse::<f64>().unwrap();
+            expense.participants = selected_users;
+
+            if description.get().len() > 0 {
+                expense.description = Some(description.get());
+            }
+
+            add_expense(expense).await;
+        });
+    };
+
+    let paid_by_view = move || match users.get() {
+        Some(Ok(users)) => {
+            let first_option = view! {
+                <option disabled selected required>
+                    "Select who paid"
+                </option>
+            };
+
+            let users_options = users.into_iter().map(|user| {
+                let user_clone = user.clone();
+
+                view! {
+                    <option on:click=move |_| {
+                        set_who_payed(Some(user.clone()))
+                    }>{user_clone.username}</option>
+                }
+            });
+
+            let all_options = iter::once(first_option).chain(users_options).collect_view();
+
+            view! { <select class="select select-primary w-full">{all_options}</select> }
+                .into_view()
+        }
+        _ => view! { <p>"Error"</p> }.into_view(),
+    };
+
+    let participants_view = move || match users.get() {
+        Some(Ok(users)) => users
+            .into_iter()
+            .map(|user| {
+                let user_clone = user.clone();
+
+                let on_click = move |_| {
+                    set_selected_participants.update(|selected_participants| {
+                        if let Some(is_selected) = selected_participants.get(&user) {
+                            selected_participants.insert(user.clone(), !is_selected);
+                        } else {
+                            selected_participants.insert(user.clone(), true);
+                        }
+                    });
+                };
+
+                view! {
+                    <div class="form-control">
+                        <label class="label cursor-pointer">
+                            <span class="label-text">{user_clone.username}</span>
+                            <input
+                                type="checkbox"
+                                class="checkbox checkbox-primary"
+                                on:click=on_click
+                            />
+                        </label>
+                    </div>
+                }
+            })
+            .collect_view(),
+        _ => view! { <p>"Error"</p> }.into_view(),
     };
 
     view! {
         <div class="mt-10 w-80">
-            <Transition fallback=move || view! { <p>"Loading..."</p> }>
-                <p class="text-xl font-bold">Who paid?</p>
-                {move || users_selection_view(payers_selection, set_payers_selection)}
+                <Transition fallback=move || view! { <p>"Loading..."</p> }>
+                    <InputWithControlsComponent params=input_title_params.clone()/>
 
-                <div class="mt-6"></div>
+                    <InputComponent params=input_description_params.clone()/>
 
-                <p class="text-xl font-bold">Who participated?</p>
-                {move || users_selection_view(participants_selection, set_participants_selection)}
+                    <label class="label-text font-bold mb-2">"Who paid?"</label>
+                    {move || paid_by_view()}
 
-                <InputComponent params=input_amount_params.clone() />
-            </Transition>
+                    <div class="mt-6"></div>
+
+                    <label class="label-text font-bold mb-2">"Who participated?"</label>
+                    {move || participants_view()}
+
+                    <InputWithControlsComponent params=input_amount_params.clone()/>
+
+                </Transition>
+                    <button
+                        class="btn btn-primary btn-lg w-full"
+                        prop:disabled=move || !is_form_valid()
+                        on:click=add_expense_click
+                    >
+                        <b>ADD EXPENSE</b>
+                    </button>
+
+                <Show when=has_error fallback=|| () >
+                    <NotificationComponent params=get_notification_params()/>
+                </Show>
         </div>
     }
 }

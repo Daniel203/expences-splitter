@@ -53,7 +53,7 @@ pub fn InputComponent(params: InputParams) -> impl IntoView {
                 required
             />
             <label>
-                <span class="label-text-alt text-transparent">Username error</span>
+                <span class="label-text-alt text-transparent">.</span>
             </label>
         </div>
     }
@@ -89,7 +89,7 @@ pub fn InputWithControlsComponent<T: Fn() -> Option<String> + 'static + Clone + 
                         }
                     } else {
                         view! {
-                            <span class="label-text-alt text-transparent">Username error</span>
+                            <span class="label-text-alt text-transparent">.</span>
                         }
                     }
                 }}

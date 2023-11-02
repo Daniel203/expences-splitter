@@ -29,6 +29,22 @@ pub struct Expense {
     pub created_at: Option<sqlx::types::chrono::NaiveDateTime>,
 }
 
+impl Default for Expense {
+    fn default() -> Self {
+        Self {
+            id: -1,
+            amount: 0.0,
+            participants: vec![],
+            title: "".to_string(),
+            description: None,
+            room_id: "".to_string(),
+
+            #[cfg(feature = "ssr")]
+            created_at: None,
+        }
+    }
+}
+
 cfg_if! {
     if #[cfg(feature = "ssr")] {
         impl From<ExpenseDTO> for Expense {
