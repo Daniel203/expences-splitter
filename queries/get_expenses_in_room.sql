@@ -3,6 +3,7 @@
 
 SELECT 
     expense.id,
+    expense.paid_by,
     expense.amount,
     expense.title,
     json_group_array(user_expense.user_id) as participants,

@@ -17,6 +17,43 @@ type SelectedUsers = HashMap<User, bool>;
 
 #[server(AddExpense, "/api")]
 pub async fn add_expense(expense: Expense) -> Result<(), ServerFnError> {
+    use crate::state::auth;
+    use crate::state::pool;
+    use leptos::logging::log;
+
+    let pool = pool()?;
+
+    log!("fn: add_expense() - adding expense: {:?}", expense);
+
+    // add expense
+    let res = sqlx::query!(
+        "INSERT INTO expense (paid_by, amount, title, description, room_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
+        expense.paid_by,
+        expense.amount,
+        expense.title,
+        expense.description,
+        expense.room_id
+    )
+        .fetch_one(&pool)
+        .await?;
+
+    log::info!("fn: add_expense() - added expense: {:?}", res);
+
+    log::info!("fn: add_expense() - adding participants: {:?}", expense.participants);
+
+    // add values to user_expense
+    for id_participant in expense.participants {
+        sqlx::query!(
+            "INSERT INTO user_expense (user_id, expense_id) VALUES (?, ?)",
+            id_participant,
+            res.id
+        )
+            .execute(&pool)
+            .await?;
+    }
+
+    log::info!("fn: add_expense() - added participants");
+
     Ok(())
 }
 
@@ -28,7 +65,10 @@ pub fn AddExpenseComponent(room_id: String) -> impl IntoView {
     let has_error = move || value.with(|val| matches!(val, Some(Err(_))));
 
     let room_id_clone = room_id.clone();
-    let users = create_resource(move || (), move |_| get_users_in_room(room_id_clone));
+    let users = create_resource(
+        move || (),
+        move |_| get_users_in_room(room_id_clone.clone()),
+    );
 
     let (who_payed, set_who_payed) = create_signal::<Option<User>>(None);
     let (selected_participants, set_selected_participants) = create_signal(SelectedUsers::new());
@@ -94,7 +134,8 @@ pub fn AddExpenseComponent(room_id: String) -> impl IntoView {
         move || title_error().is_none() && amount_error().is_none() && who_payed.get().is_some();
 
     let add_expense_click = move |_| {
-        spawn_local(async {
+        let room_id = room_id.clone();
+        spawn_local(async move {
             let selected_users: Vec<i64> = selected_participants
                 .get()
                 .iter()
@@ -110,7 +151,8 @@ pub fn AddExpenseComponent(room_id: String) -> impl IntoView {
                 .collect();
 
             let mut expense = Expense::default();
-            expense.room_id = room_id.clone();
+            expense.paid_by = who_payed.get().unwrap().id;
+            expense.room_id = room_id;
             expense.title = title.get();
             expense.amount = amount.get().parse::<f64>().unwrap();
             expense.participants = selected_users;
@@ -184,33 +226,33 @@ pub fn AddExpenseComponent(room_id: String) -> impl IntoView {
 
     view! {
         <div class="mt-10 w-80">
-                <Transition fallback=move || view! { <p>"Loading..."</p> }>
-                    <InputWithControlsComponent params=input_title_params.clone()/>
+            <Transition fallback=move || view! { <p>"Loading..."</p> }>
+                <InputWithControlsComponent params=input_title_params.clone()/>
 
-                    <InputComponent params=input_description_params.clone()/>
+                <InputComponent params=input_description_params.clone()/>
 
-                    <label class="label-text font-bold mb-2">"Who paid?"</label>
-                    {move || paid_by_view()}
+                <label class="label-text font-bold mb-2">"Who paid?"</label>
+                {move || paid_by_view()}
 
-                    <div class="mt-6"></div>
+                <div class="mt-6"></div>
 
-                    <label class="label-text font-bold mb-2">"Who participated?"</label>
-                    {move || participants_view()}
+                <label class="label-text font-bold mb-2">"Who participated?"</label>
+                {move || participants_view()}
 
-                    <InputWithControlsComponent params=input_amount_params.clone()/>
+                <InputWithControlsComponent params=input_amount_params.clone()/>
 
-                </Transition>
-                    <button
-                        class="btn btn-primary btn-lg w-full"
-                        prop:disabled=move || !is_form_valid()
-                        on:click=add_expense_click
-                    >
-                        <b>ADD EXPENSE</b>
-                    </button>
+            </Transition>
+            <button
+                class="btn btn-primary btn-lg w-full"
+                prop:disabled=move || !is_form_valid()
+                on:click=add_expense_click
+            >
+                <b>ADD EXPENSE</b>
+            </button>
 
-                <Show when=has_error fallback=|| () >
-                    <NotificationComponent params=get_notification_params()/>
-                </Show>
+            <Show when=has_error fallback=|| ()>
+                <NotificationComponent params=get_notification_params()/>
+            </Show>
         </div>
     }
 }

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExpenseDTO {
     pub id: Option<i64>,
+    pub paid_by: Option<i64>,
     pub amount: Option<f64>,
     pub participants: Option<String>,
     pub title: Option<String>,
@@ -19,6 +20,7 @@ pub struct ExpenseDTO {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Expense {
     pub id: i64,
+    pub paid_by: i64,
     pub amount: f64,
     pub participants: Vec<i64>,
     pub title: String,
@@ -33,6 +35,7 @@ impl Default for Expense {
     fn default() -> Self {
         Self {
             id: -1,
+            paid_by: -1,
             amount: 0.0,
             participants: vec![],
             title: "".to_string(),
@@ -49,10 +52,13 @@ cfg_if! {
     if #[cfg(feature = "ssr")] {
         impl From<ExpenseDTO> for Expense {
             fn from(expense: ExpenseDTO) -> Self {
+                println!("expense: {:?}", expense);
+
                 Self {
                     id: expense.id.unwrap(),
+                    paid_by: expense.paid_by.unwrap(),
                     amount: expense.amount.unwrap(),
-                    participants: expense.participants.unwrap().split(",").map(|s| s.parse::<i64>().unwrap()).collect(),
+                    participants: expense.participants.unwrap().replace(&['[', ']'], "").split(",").map(|s| s.parse::<i64>().unwrap()).collect(),
                     title: expense.title.unwrap(),
                     description: expense.description,
                     room_id: expense.room_id.unwrap(),
